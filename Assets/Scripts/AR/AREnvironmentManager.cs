@@ -80,6 +80,26 @@ namespace Nibrask.AR
                 planeManager.trackablesChanged.RemoveListener(OnPlanesChanged);
         }
 
+        private void Start()
+        {
+            // CRITICAL: By Start(), AppStateManager is guaranteed to have run Awake().
+            // If Instance was null during OnEnable() we missed the transition to Onboarding — fix it now.
+            if (AppStateManager.Instance != null)
+            {
+                // Always re-subscribe safely to avoid duplicates
+                AppStateManager.Instance.OnStateChanged -= HandleStateChanged;
+                AppStateManager.Instance.OnStateChanged += HandleStateChanged;
+
+                // Sync to whatever state is currently active
+                HandleStateChanged(AppState.Onboarding, AppStateManager.Instance.CurrentState);
+            }
+            else
+            {
+                Debug.LogError("[AREnvironmentManager] AppStateManager.Instance is null in Start(). " +
+                    "Ensure AppStateManager is in the scene and its Awake() runs first.");
+            }
+        }
+
         private void Update()
         {
             // Disable ARCore Instant Placement once the session is ready.
@@ -215,12 +235,29 @@ namespace Nibrask.AR
         {
             hitPose = Pose.identity;
 
-            if (raycastManager == null) return false;
-
-            if (raycastManager.Raycast(screenPosition, raycastHits, TrackableType.PlaneWithinPolygon))
+            if (raycastManager == null)
             {
-                hitPose = raycastHits[0].pose;
-                return true;
+                Debug.LogError("[AREnvironmentManager] raycastManager is NULL. Assign ARRaycastManager in the Inspector.");
+                return false;
+            }
+
+            // Try PlaneWithinPolygon first (most accurate), then fall back to PlaneWithinBounds
+            // and PlaneEstimated for taps near plane edges where the polygon check fails.
+            var typesToTry = new[]
+            {
+                TrackableType.PlaneWithinPolygon,
+                TrackableType.PlaneWithinBounds,
+                TrackableType.PlaneEstimated,
+            };
+
+            foreach (var trackableType in typesToTry)
+            {
+                if (raycastManager.Raycast(screenPosition, raycastHits, trackableType))
+                {
+                    hitPose = raycastHits[0].pose;
+                    Debug.Log($"[AREnvironmentManager] Raycast succeeded with type: {trackableType}");
+                    return true;
+                }
             }
 
             return false;

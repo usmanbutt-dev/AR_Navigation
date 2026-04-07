@@ -163,12 +163,16 @@ namespace Nibrask.UI
             if (scanningPanel != null) scanningPanel.SetActive(false);
             targetAlpha = 1f;
 
-            // Re-enable UI interaction
-            var raycaster = GetComponentInParent<GraphicRaycaster>();
+            // Restore full UI interaction for the welcome screen
+            var raycaster = GetComponent<GraphicRaycaster>();
             if (raycaster != null) raycaster.enabled = true;
 
+            // Restore CanvasGroup blocking so the Start button is interactable
             if (canvasGroup != null)
+            {
                 canvasGroup.blocksRaycasts = true;
+                canvasGroup.interactable = true;
+            }
         }
 
         /// <summary>
@@ -200,12 +204,17 @@ namespace Nibrask.UI
             scanProgress = 0f;
             floorFound = false;
 
-            // Disable raycaster so the UI doesn't eat the AR screen taps (Fix for AR anchor placement)
-            var raycaster = GetComponentInParent<GraphicRaycaster>();
+            // CRITICAL: Disable ALL raycast blocking during Scanning so AR taps reach the world.
+            // Both the GraphicRaycaster AND the CanvasGroup need to be disabled otherwise
+            // CanvasGroup.blocksRaycasts=true silently eats every touch on its transparent background.
+            var raycaster = GetComponent<GraphicRaycaster>();
             if (raycaster != null) raycaster.enabled = false;
 
             if (canvasGroup != null)
+            {
                 canvasGroup.blocksRaycasts = false;
+                canvasGroup.interactable = false;
+            }
         }
 
         /// <summary>
