@@ -58,6 +58,7 @@ namespace Nibrask.UI
 
         private void OnEnable()
         {
+            // Subscribe if AppStateManager already exists (re-enables, mid-session)
             if (AppStateManager.Instance != null)
                 AppStateManager.Instance.OnStateChanged += HandleStateChanged;
 
@@ -65,7 +66,6 @@ namespace Nibrask.UI
 
             if (startButton != null)
             {
-                // Remove before adding to prevent duplicate listeners on re-enable (Fix #9)
                 startButton.onClick.RemoveListener(OnStartButtonClicked);
                 startButton.onClick.AddListener(OnStartButtonClicked);
             }
@@ -86,10 +86,22 @@ namespace Nibrask.UI
         {
             SetupWelcomePanel();
 
-            // Sync to the current state in case we missed the initial OnStateChanged event
-            // due to Unity's non-deterministic script execution order (Fix #1)
+            // CRITICAL: By Start(), AppStateManager is guaranteed to have run Awake().
+            // If Instance was null during OnEnable() we missed the subscription — do it now.
             if (AppStateManager.Instance != null)
+            {
+                // Re-subscribe safely (removing first prevents duplicates if OnEnable also subscribed)
+                AppStateManager.Instance.OnStateChanged -= HandleStateChanged;
+                AppStateManager.Instance.OnStateChanged += HandleStateChanged;
+
+                // Sync to current state (handles fast transitions or missed events)
                 HandleStateChanged(AppState.Onboarding, AppStateManager.Instance.CurrentState);
+            }
+            else
+            {
+                Debug.LogError("[OnboardingUI] AppStateManager.Instance is null in Start(). " +
+                    "Ensure AppStateManager is in the scene and its Awake() runs before OnboardingUI.Start().");
+            }
         }
 
         private void Update()
@@ -153,8 +165,16 @@ namespace Nibrask.UI
         /// </summary>
         private void ShowScanning()
         {
+            Debug.Log($"[OnboardingUI] ShowScanning() called. welcomePanel={welcomePanel != null}, scanningPanel={scanningPanel != null}");
+
             if (welcomePanel != null) welcomePanel.SetActive(false);
             if (scanningPanel != null) scanningPanel.SetActive(true);
+
+            if (scanningPanel == null)
+            {
+                Debug.LogError("[OnboardingUI] scanningPanel is NOT assigned in the Inspector! " +
+                    "Assign the scanning panel GameObject in the OnboardingUI component.");
+            }
 
             if (scanningInstructionText != null)
                 scanningInstructionText.text = "Point your phone at the floor\nand move it slowly around";
@@ -209,6 +229,7 @@ namespace Nibrask.UI
 
                 case AppState.Scanning:
                     gameObject.SetActive(true);
+                    Debug.Log("[OnboardingUI] HandleStateChanged → Scanning. Calling ShowScanning().");
                     ShowScanning();
                     break;
 
