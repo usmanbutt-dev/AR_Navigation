@@ -1,0 +1,91 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08ab177745cd70942a080a8fd62ae224, type: 3}
+  m_Name: SampleTerminal
+  m_EditorClassIdentifier: Assembly-CSharp::Nibrask.Data.TerminalMapData
+  terminalName: Terminal 1
+  destinations:
+  - {fileID: 11400000, guid: 4b522fe4f587ba945b659c27711c1fd6, type: 2}
+  - {fileID: 11400000, guid: 9c30b3313ad5e8b439522abe82889552, type: 2}
+  - {fileID: 11400000, guid: 14582d642cce7a74580e9b15a205007a, type: 2}
+  - {fileID: 11400000, guid: 44e0e620e0a9b7940befa67e9d1a96d7, type: 2}
+  - {fileID: 11400000, guid: 3ba07d502a4822244a1d0ae03cab1842, type: 2}
+  - {fileID: 11400000, guid: 8ea82093bdb61364c930d7f4ba09e048, type: 2}
+  - {fileID: 11400000, guid: b8ab0212fe52bdb4d912c298948b145c, type: 2}
+  - {fileID: 11400000, guid: 43e13df341233a240bab12c5f0aa8c7a, type: 2}
+  waypoints:
+  - nodeId: 0
+    relativePosition: {x: -5, y: 0, z: 0}
+    connectedNodeIds: 01000000
+    isDestinationNode: 0
+    debugLabel: Exit
+  - nodeId: 1
+    relativePosition: {x: 0, y: 0, z: 3}
+    connectedNodeIds: 000000000200000003000000
+    isDestinationNode: 0
+    debugLabel: Security
+  - nodeId: 2
+    relativePosition: {x: 0, y: 0, z: 0}
+    connectedNodeIds: 0100000003000000
+    isDestinationNode: 0
+    debugLabel: Entrance
+  - nodeId: 3
+    relativePosition: {x: 5, y: 0, z: 7}
+    connectedNodeIds: 01000000020000000400000008000000
+    isDestinationNode: 0
+    debugLabel: Junction
+  - nodeId: 4
+    relativePosition: {x: 5, y: 0, z: 0}
+    connectedNodeIds: 0300000005000000
+    isDestinationNode: 0
+    debugLabel: ConcA Start
+  - nodeId: 5
+    relativePosition: {x: 10, y: 0, z: 0}
+    connectedNodeIds: 0400000006000000
+    isDestinationNode: 1
+    debugLabel: Gate A12
+  - nodeId: 6
+    relativePosition: {x: 15, y: 0, z: 0}
+    connectedNodeIds: 0500000007000000
+    isDestinationNode: 0
+    debugLabel: ConcA Mid
+  - nodeId: 7
+    relativePosition: {x: 20, y: 0, z: 0}
+    connectedNodeIds: 06000000
+    isDestinationNode: 1
+    debugLabel: Gate A14
+  - nodeId: 8
+    relativePosition: {x: 15, y: 0, z: 7}
+    connectedNodeIds: 0300000009000000
+    isDestinationNode: 0
+    debugLabel: Restaurant
+  - nodeId: 9
+    relativePosition: {x: 5, y: 0, z: 15}
+    connectedNodeIds: 080000000a000000
+    isDestinationNode: 0
+    debugLabel: ConcB Start
+  - nodeId: 10
+    relativePosition: {x: 10, y: 0, z: 15}
+    connectedNodeIds: 090000000b000000
+    isDestinationNode: 1
+    debugLabel: Gate B3
+  - nodeId: 11
+    relativePosition: {x: 15, y: 0, z: 15}
+    connectedNodeIds: 0a0000000c000000
+    isDestinationNode: 0
+    debugLabel: ConcB Mid
+  - nodeId: 12
+    relativePosition: {x: 20, y: 0, z: 15}
+    connectedNodeIds: 0b000000
+    isDestinationNode: 1
+    debugLabel: Gate B7
+  scaleFactor: 1

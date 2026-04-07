@@ -1,0 +1,295 @@
+using UnityEngine;
+using TMPro;
+using Nibrask.Core;
+using Nibrask.Data;
+
+namespace Nibrask.UI
+{
+    /// <summary>
+    /// World-space floating information panel displayed during navigation.
+    /// Shows destination name, gate number, boarding time, remaining distance,
+    /// and estimated walking time. Updates dynamically as the user moves.
+    /// Positioned as a floating HUD that follows the camera with a slight offset.
+    /// </summary>
+    public class GateInfoPanel : MonoBehaviour
+    {
+        [Header("UI Elements")]
+        [SerializeField]
+        private TextMeshProUGUI destinationNameText;
+
+        [SerializeField]
+        private TextMeshProUGUI flightInfoText;
+
+        [SerializeField]
+        private TextMeshProUGUI distanceText;
+
+        [SerializeField]
+        private TextMeshProUGUI walkingTimeText;
+
+        [SerializeField]
+        private TextMeshProUGUI statusText;
+
+        [Header("Panel")]
+        [SerializeField]
+        private CanvasGroup canvasGroup;
+
+        [SerializeField]
+        private GameObject panelRoot;
+
+        [Header("Positioning")]
+        [SerializeField]
+        [Tooltip("Offset from camera position")]
+        private Vector3 cameraOffset = new Vector3(0.3f, -0.1f, 0.8f);
+
+        [SerializeField]
+        [Tooltip("Smooth follow speed")]
+        private float followSpeed = 3f;
+
+        [SerializeField]
+        [Tooltip("Whether the panel follows the camera or stays world-anchored")]
+        private bool followCamera = true;
+
+        [Header("Animation")]
+        [SerializeField]
+        private float fadeSpeed = 3f;
+
+        private float targetAlpha = 0f;
+        private DestinationData currentDestination;
+        private bool isMinimized = false;
+        private Vector3 targetPosition;
+
+        private void OnEnable()
+        {
+            if (AppStateManager.Instance != null)
+                AppStateManager.Instance.OnStateChanged += HandleStateChanged;
+
+            AppEvents.OnDestinationSelected += HandleDestinationSelected;
+            AppEvents.OnDistanceUpdated += HandleDistanceUpdated;
+            AppEvents.OnOffRoute += HandleOffRoute;
+            AppEvents.OnBackOnRoute += HandleBackOnRoute;
+            AppEvents.OnRouteRecalculated += HandleRouteRecalculated;
+        }
+
+        private void OnDisable()
+        {
+            if (AppStateManager.Instance != null)
+                AppStateManager.Instance.OnStateChanged -= HandleStateChanged;
+
+            AppEvents.OnDestinationSelected -= HandleDestinationSelected;
+            AppEvents.OnDistanceUpdated -= HandleDistanceUpdated;
+            AppEvents.OnOffRoute -= HandleOffRoute;
+            AppEvents.OnBackOnRoute -= HandleBackOnRoute;
+            AppEvents.OnRouteRecalculated -= HandleRouteRecalculated;
+        }
+
+        private void Update()
+        {
+            // Animate alpha
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = Mathf.MoveTowards(canvasGroup.alpha, targetAlpha, Time.deltaTime * fadeSpeed);
+            }
+
+            // Follow camera
+            if (followCamera && targetAlpha > 0f)
+            {
+                UpdatePosition();
+            }
+        }
+
+        /// <summary>
+        /// Smoothly follows the camera with an offset.
+        /// </summary>
+        private void UpdatePosition()
+        {
+            var cam = Camera.main;
+            if (cam == null) return;
+
+            // Calculate target position relative to camera
+            targetPosition = cam.transform.TransformPoint(cameraOffset);
+
+            // Smooth follow
+            transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * followSpeed);
+
+            // Face the camera
+            Vector3 lookDir = cam.transform.position - transform.position;
+            lookDir.y = 0f;
+            if (lookDir.sqrMagnitude > 0.001f)
+            {
+                transform.rotation = Quaternion.Slerp(
+                    transform.rotation,
+                    Quaternion.LookRotation(lookDir),
+                    Time.deltaTime * followSpeed
+                );
+            }
+        }
+
+        /// <summary>
+        /// Shows the panel with the specified destination info.
+        /// </summary>
+        public void Show(DestinationData destination)
+        {
+            currentDestination = destination;
+            gameObject.SetActive(true);
+
+            if (destinationNameText != null)
+                destinationNameText.text = destination.destinationName;
+
+            if (flightInfoText != null)
+            {
+                if (destination.destinationType == DestinationType.Gate)
+                {
+                    string flightInfo = "";
+                    if (!string.IsNullOrEmpty(destination.flightNumber))
+                        flightInfo += $"✈️ {destination.flightNumber}";
+                    if (!string.IsNullOrEmpty(destination.boardingTime))
+                        flightInfo += $"\n🕐 Boarding: {destination.boardingTime}";
+                    if (!string.IsNullOrEmpty(destination.airlineName))
+                        flightInfo += $"\n🏷️ {destination.airlineName}";
+
+                    flightInfoText.text = flightInfo;
+                    flightInfoText.gameObject.SetActive(true);
+                }
+                else
+                {
+                    flightInfoText.text = destination.GetTypeLabel();
+                    flightInfoText.gameObject.SetActive(true);
+                }
+            }
+
+            if (distanceText != null)
+                distanceText.text = "Calculating...";
+
+            if (walkingTimeText != null)
+                walkingTimeText.text = "⏱️ --:--";
+
+            if (statusText != null)
+            {
+                statusText.text = "Following route";
+                statusText.color = new Color(0.0f, 0.9f, 0.4f);
+            }
+
+            targetAlpha = 1f;
+
+            // Position initially
+            var cam = Camera.main;
+            if (cam != null)
+            {
+                transform.position = cam.transform.TransformPoint(cameraOffset);
+            }
+        }
+
+        /// <summary>
+        /// Hides the panel with fade animation.
+        /// </summary>
+        public void Hide()
+        {
+            targetAlpha = 0f;
+            currentDestination = null;
+            Invoke(nameof(DeactivateSelf), 0.5f);
+        }
+
+        /// <summary>
+        /// Toggles the panel between full and minimized views.
+        /// </summary>
+        public void ToggleMinimize()
+        {
+            isMinimized = !isMinimized;
+
+            if (flightInfoText != null)
+                flightInfoText.gameObject.SetActive(!isMinimized);
+
+            if (statusText != null)
+                statusText.gameObject.SetActive(!isMinimized);
+        }
+
+        // ── Event Handlers ─────────────────────────────────────────────
+
+        private void HandleStateChanged(AppState oldState, AppState newState)
+        {
+            switch (newState)
+            {
+                case AppState.Navigating:
+                    if (AppStateManager.Instance?.SelectedDestination != null)
+                        Show(AppStateManager.Instance.SelectedDestination);
+                    break;
+
+                default:
+                    Hide();
+                    break;
+            }
+        }
+
+        private void HandleDestinationSelected(DestinationData destination)
+        {
+            Show(destination);
+        }
+
+        private void HandleDistanceUpdated(float distanceMeters, float estimatedTimeSeconds)
+        {
+            if (distanceText != null)
+            {
+                if (distanceMeters >= 1000f)
+                    distanceText.text = $"📏 {distanceMeters / 1000f:F1} km";
+                else
+                    distanceText.text = $"📏 {distanceMeters:F0} m";
+            }
+
+            if (walkingTimeText != null)
+            {
+                int minutes = Mathf.FloorToInt(estimatedTimeSeconds / 60f);
+                int seconds = Mathf.FloorToInt(estimatedTimeSeconds % 60f);
+
+                if (minutes > 0)
+                    walkingTimeText.text = $"🚶 {minutes} min {seconds} sec";
+                else
+                    walkingTimeText.text = $"🚶 {seconds} sec";
+            }
+        }
+
+        private void HandleOffRoute()
+        {
+            if (statusText != null)
+            {
+                statusText.text = "⚠️ Off route — recalculating...";
+                statusText.color = new Color(1.0f, 0.4f, 0.1f);
+            }
+        }
+
+        private void HandleBackOnRoute()
+        {
+            if (statusText != null)
+            {
+                statusText.text = "✓ Back on route";
+                statusText.color = new Color(0.0f, 0.9f, 0.4f);
+            }
+        }
+
+        private void HandleRouteRecalculated()
+        {
+            if (statusText != null)
+            {
+                statusText.text = "🔄 Route updated";
+                statusText.color = new Color(0.0f, 0.7f, 0.9f);
+
+                // Reset to normal after a delay
+                Invoke(nameof(ResetStatusText), 2f);
+            }
+        }
+
+        private void ResetStatusText()
+        {
+            if (statusText != null)
+            {
+                statusText.text = "Following route";
+                statusText.color = new Color(0.0f, 0.9f, 0.4f);
+            }
+        }
+
+        private void DeactivateSelf()
+        {
+            if (targetAlpha <= 0f)
+                gameObject.SetActive(false);
+        }
+    }
+}
