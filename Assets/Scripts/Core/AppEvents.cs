@@ -65,6 +65,12 @@ namespace Nibrask.Core
         public static void RaiseRouteRecalculated() => OnRouteRecalculated?.Invoke();
 
         /// <summary>
+        /// Fired when a route recalculation fails to find any path (e.g., user is in an unreachable area).
+        /// </summary>
+        public static event Action OnRecalculationFailed;
+        public static void RaiseRecalculationFailed() => OnRecalculationFailed?.Invoke();
+
+        /// <summary>
         /// Fired when the user has arrived at the selected destination.
         /// </summary>
         public static event Action<DestinationData> OnArrived;
@@ -92,5 +98,28 @@ namespace Nibrask.Core
         public static event Action<float, float> OnDistanceUpdated;
         public static void RaiseDistanceUpdated(float distanceMeters, float estimatedTimeSeconds) =>
             OnDistanceUpdated?.Invoke(distanceMeters, estimatedTimeSeconds);
+
+        // ── Lifecycle ──────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Clears all static event subscriptions. Call this when the scene/session resets
+        /// to prevent stale subscribers on destroyed objects from previous sessions.
+        /// </summary>
+        public static void ClearAll()
+        {
+            OnFloorDetected = null;
+            OnTerminalAnchorPlaced = null;
+            OnDestinationSelected = null;
+            OnNavigationStarted = null;
+            OnCheckpointReached = null;
+            OnOffRoute = null;
+            OnBackOnRoute = null;
+            OnRouteRecalculated = null;
+            OnRecalculationFailed = null;
+            OnArrived = null;
+            OnOnboardingComplete = null;
+            OnNavigateAgain = null;
+            OnDistanceUpdated = null;
+        }
     }
 }

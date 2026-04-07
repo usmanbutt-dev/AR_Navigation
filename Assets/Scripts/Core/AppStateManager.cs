@@ -75,6 +75,18 @@ namespace Nibrask.Core
             }
 
             Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+
+        private void OnDestroy()
+        {
+            // Clear all static event subscriptions to prevent leaks across scene reloads.
+            // This is important because AppEvents uses static events which persist between sessions.
+            if (Instance == this)
+            {
+                AppEvents.ClearAll();
+                Instance = null;
+            }
         }
 
         private void OnEnable()
