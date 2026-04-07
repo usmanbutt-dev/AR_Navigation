@@ -75,7 +75,10 @@ namespace Nibrask.Core
             }
 
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            // DontDestroyOnLoad requires a root-level GameObject.
+            // Using transform.root ensures this works even if AppStateManager
+            // is nested under a parent in the scene hierarchy.
+            DontDestroyOnLoad(transform.root.gameObject);
         }
 
         private void OnDestroy()
