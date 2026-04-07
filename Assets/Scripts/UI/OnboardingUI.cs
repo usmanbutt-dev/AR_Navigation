@@ -162,6 +162,10 @@ namespace Nibrask.UI
             if (welcomePanel != null) welcomePanel.SetActive(true);
             if (scanningPanel != null) scanningPanel.SetActive(false);
             targetAlpha = 1f;
+
+            // Re-enable UI interaction
+            var raycaster = GetComponent<GraphicRaycaster>();
+            if (raycaster != null) raycaster.enabled = true;
         }
 
         /// <summary>
@@ -192,6 +196,10 @@ namespace Nibrask.UI
             isScanning = true;
             scanProgress = 0f;
             floorFound = false;
+
+            // Disable raycaster so the UI doesn't eat the AR screen taps (Fix for AR anchor placement)
+            var raycaster = GetComponent<GraphicRaycaster>();
+            if (raycaster != null) raycaster.enabled = false;
         }
 
         /// <summary>

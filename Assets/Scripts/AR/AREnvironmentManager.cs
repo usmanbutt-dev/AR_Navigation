@@ -156,14 +156,26 @@ namespace Nibrask.AR
             Touch touch = Input.GetTouch(0);
             if (touch.phase != TouchPhase.Began) return;
 
+            Debug.Log($"[AREnvironmentManager] User tapped screen at {touch.position}. Checking for UI overlap...");
+
             // Don't place anchor if touching UI
             if (UnityEngine.EventSystems.EventSystem.current != null &&
                 UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+            {
+                Debug.LogWarning("[AREnvironmentManager] Tap ignored: EventSystem reported tap was over a UI element. (An invisible UI panel might be eating the raycast)");
                 return;
+            }
+
+            Debug.Log("[AREnvironmentManager] Tap was not on UI. Performing AR Raycast to find a plane...");
 
             if (RaycastFromScreen(touch.position, out Pose hitPose))
             {
+                Debug.Log($"[AREnvironmentManager] AR Raycast hit plane at {hitPose.position}! Placing anchor.");
                 PlaceTerminalAnchor(hitPose);
+            }
+            else
+            {
+                Debug.LogWarning("[AREnvironmentManager] AR Raycast failed to hit any TrackableType.PlaneWithinPolygon.");
             }
         }
 
