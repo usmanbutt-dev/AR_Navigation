@@ -137,6 +137,7 @@ namespace Nibrask.Core
 
         private void HandleOnboardingComplete()
         {
+            Debug.Log($"[AppStateManager] HandleOnboardingComplete received! Current state: {currentState}");
             if (currentState == AppState.Onboarding)
             {
                 TransitionTo(AppState.Scanning);

@@ -146,6 +146,10 @@ namespace Nibrask.UI
                 if (buttonText != null)
                     buttonText.text = "Start Scanning";
             }
+            else
+            {
+                Debug.LogError("[OnboardingUI] startButton is NOT assigned in the Inspector! The user cannot start scanning.");
+            }
 
             ShowWelcome();
         }
@@ -195,6 +199,7 @@ namespace Nibrask.UI
         /// </summary>
         private void OnStartButtonClicked()
         {
+            Debug.Log("[OnboardingUI] OnStartButtonClicked! Emitting AppEvents.RaiseOnboardingComplete().");
             AppEvents.RaiseOnboardingComplete();
         }
 
