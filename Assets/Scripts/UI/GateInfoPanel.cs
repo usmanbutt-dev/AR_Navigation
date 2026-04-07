@@ -84,6 +84,15 @@ namespace Nibrask.UI
             AppEvents.OnRecalculationFailed -= HandleRecalculationFailed; // Fix #11
         }
 
+        private void Start()
+        {
+            if (AppStateManager.Instance != null)
+            {
+                AppStateManager.Instance.OnStateChanged -= HandleStateChanged;
+                AppStateManager.Instance.OnStateChanged += HandleStateChanged;
+            }
+        }
+
         private void Update()
         {
             // Animate alpha
@@ -188,6 +197,7 @@ namespace Nibrask.UI
         {
             targetAlpha = 0f;
             currentDestination = null;
+            CancelInvoke(nameof(DeactivateSelf));
             Invoke(nameof(DeactivateSelf), 0.5f);
         }
 
@@ -272,7 +282,8 @@ namespace Nibrask.UI
                 statusText.text = "🔄 Route updated";
                 statusText.color = new Color(0.0f, 0.7f, 0.9f);
 
-                // Reset to normal after a delay
+                // Reset to normal after a delay (cancel any pending reset first)
+                CancelInvoke(nameof(ResetStatusText));
                 Invoke(nameof(ResetStatusText), 2f);
             }
         }

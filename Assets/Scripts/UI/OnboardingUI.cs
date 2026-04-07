@@ -118,10 +118,10 @@ namespace Nibrask.UI
 
         private void Update()
         {
-            // Animate canvas alpha
-            if (canvasGroup != null)
+            // Animate canvas alpha (use cached reference that includes GetComponent fallback)
+            if (activeCanvasGroup != null)
             {
-                canvasGroup.alpha = Mathf.MoveTowards(canvasGroup.alpha, targetAlpha, Time.deltaTime * fadeSpeed);
+                activeCanvasGroup.alpha = Mathf.MoveTowards(activeCanvasGroup.alpha, targetAlpha, Time.deltaTime * fadeSpeed);
             }
 
             // Animate scanning progress

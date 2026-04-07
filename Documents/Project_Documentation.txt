@@ -1,0 +1,120 @@
+
+Final Proejct: Phase I (Proposal)
+
+
+ICS-544: Interactive Computer Graphics 
+Term 252
+Dr. Alaauldeen Ismail Siddiq Sabr
+04. 03. 2026
+ 
+
+ نبراسك (Nibrāsk): An Augmented Reality Navigation Assistant for Airport Terminals
+1. Elevator Pitch
+نبراسك (Nibrāsk) is an Augmented Reality (AR) navigation application designed to help passengers move easily through large airport terminals. Many travelers experience difficulty locating gates or airport services, especially in unfamiliar airports. This system aims to simplify the navigation process by overlaying directional guidance directly onto the real environment.
+Using the smartphone camera, the application displays AR arrows and a path on the floor that guide passengers from their current location to a selected destination such as a boarding gate, restroom, security checkpoint, restaurant, or exit.
+The system uses 6DoF tracking to maintain stable spatial alignment between the virtual navigation elements and the physical airport environment. The user's movement through space is interpreted through translational motion (e.g., Surge, Sway, Heave) while orientation changes are captured through rotational motion (e.g., Pitch, Yaw, Roll).
+The system also displays useful information including gate number, boarding time, and estimated walking time. By combining real-world navigation with spatial digital guidance, the application improves passenger awareness and reduces confusion during travel.
+2. Target Users
+The primary users of Nibrāsk are passengers navigating large airport terminals.
+* First-Time Travelers: Passengers who are unfamiliar with the airport layout and may struggle to locate their gate.
+* International Travelers: Travelers who may face language barriers when reading airport signage.
+* Passengers with Tight Connections: Passengers who need to quickly locate the fastest route to their departure gate.
+* Families Traveling with Children: Families who benefit from simple visual navigation when moving through crowded airport environments.
+3. XR Modality Decision
+The project will use Augmented Reality (AR) navigation system using spatially anchored overlays. The decision is based on the notion that Airport navigation occurs in a real physical environment. Therefore, AR is found more suitable as it allows digital guidance to be placed directly on top of the real world.
+Directional arrows, navigation paths, and information panels will be spatially anchored within the real environment so that passengers can follow them naturally while walking. As passengers move through the terminal, the system continuously updates their pose, which includes both position and orientation within the environment. Movement through the airport corresponds to translational motion (e.g., Surge, Sway, Heave) while head or device rotation corresponds to rotational motion (e.g., Pitch, Yaw, Roll).
+This approach improves spatial understanding and makes navigation more intuitive compared to traditional 2D maps.
+4. Feature-to-Course Coverage Matrix
+Feature
+XR Pillar Covered
+AR path and arrows anchored to the floor
+Spatial Understanding
+Selecting flight or destination from a floating menu
+3D Interaction
+Gate information panel displayed in world space
+Spatial UI
+Re-center navigation function
+Navigation / Movement
+Visual confirmation when reaching checkpoints
+Feedback
+Audio notification when moving away from the route
+Feedback
+Navigation state (start → navigating → arrival)
+Scene & State Management
+Estimated walking time display
+Spatial UI
+Route recalculation if the user deviates from the path
+Interaction + State
+5. User Journey and Wireframe
+Step 1 - Onboarding
+When the user launches the application, a short introduction explains how the AR navigation works. The user is instructed to scan the floor so the system can detect the environment and establish a stable world coordinate frame.
+Interface: A floating panel with brief instructions appears in front of the user.
+Step 2 - Destination Selection
+The user selects their flight or destination.
+Interface: A world-space menu displaying flight numbers or common locations such as restrooms, restaurants, or exits.
+Interaction: The user selects an option using touch input or a simple selection gesture.
+Step 3 - Navigation Start
+Once the destination is selected, the system generates a navigation path.
+Interface elements include:
+• AR arrows placed along the floor
+• A highlighted navigation path
+• A floating information panel showing gate number and walking time
+Step 4 - Navigation Feedback
+During navigation, the system provides feedback to help the user stay on the correct route.
+Examples:
+• Arrows change color when the user reaches checkpoints
+• A notification appears if the user moves away from the path
+• Distance and walking time are updated dynamically
+The system maintains stable spatial alignment by continuously updating the user's pose estimation relative to the environment.
+Step 5 - Arrival
+When the user reaches the destination, the system confirms arrival.
+Interface:
+A floating message confirming that the passenger has reached the correct gate.Bottom of Form
+
+
+6. Technical Implementation Plan (5 Weeks)
+Week
+Task
+Responsible
+Expected Output
+Week 1
+Finalize project concept, user flow, and wireframes. Set up Unity project and AR packages. Aim the desired airport layout.
+Fahad
+ Maha
+Approved concept, system flow diagram, and Unity project setup
+Week 2
+Implement AR plane detection and create the basic airport terminal environment.
+ Waleed
+Working AR floor detection and simple terminal scene
+Week 3
+Develop navigation path generation and AR directional arrows.
+Fahad
+
+Path rendering and arrow guidance working
+Week 4
+Design and implement spatial UI including destination selection and information panels.
+Maha
+Functional world-space UI and interaction
+Week 5
+Integrate components, implement feedback (visual/audio), and testing and debugging.
+Waleed
+Stable working prototype and demo build
+7. Risk Register
+Risk
+Description
+Mitigation
+AR tracking accuracy
+Indoor environments may reduce tracking stability
+Use a simplified simulated terminal environment
+Performance limitations
+AR rendering may affect performance on mobile devices
+Optimize assets and reduce scene complexity
+Large environment complexity
+Real airport layouts are complex and large
+Build a simplified airport layout for the prototype
+Poor lighting or reflective surfaces
+These conditions may reduce feature detection needed for pose tracking
+Ensure sufficient environmental features for stable tracking
+Difficulty detecting surfaces in crowded environments
+Moving objects and crowds may interfere with spatial mapping
+Use stable anchor points and simplified scene mapping

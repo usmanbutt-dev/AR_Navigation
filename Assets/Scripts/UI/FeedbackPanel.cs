@@ -109,6 +109,15 @@ namespace Nibrask.UI
                 AppStateManager.Instance.OnStateChanged -= HandleStateChanged;
         }
 
+        private void Start()
+        {
+            if (AppStateManager.Instance != null)
+            {
+                AppStateManager.Instance.OnStateChanged -= HandleStateChanged;
+                AppStateManager.Instance.OnStateChanged += HandleStateChanged;
+            }
+        }
+
         /// <summary>
         /// Enqueues a toast notification to be shown.
         /// </summary>

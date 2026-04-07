@@ -73,6 +73,15 @@ namespace Nibrask.UI
                 navigateAgainButton.onClick.RemoveListener(OnNavigateAgainClicked);
         }
 
+        private void Start()
+        {
+            if (AppStateManager.Instance != null)
+            {
+                AppStateManager.Instance.OnStateChanged -= HandleStateChanged;
+                AppStateManager.Instance.OnStateChanged += HandleStateChanged;
+            }
+        }
+
         private void Update()
         {
             // Animate alpha

@@ -2,7 +2,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.EnhancedTouch;
 using Nibrask.Core;
+using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 namespace Nibrask.AR
 {
@@ -69,6 +72,11 @@ namespace Nibrask.AR
 
             if (planeManager != null)
                 planeManager.trackablesChanged.AddListener(OnPlanesChanged);
+
+            // Enable New Input System enhanced touch support.
+            // The project uses XR Interaction Toolkit which runs on the New Input System.
+            // Legacy Input.GetTouch() returns nothing in this context — EnhancedTouch works correctly.
+            EnhancedTouchSupport.Enable();
         }
 
         private void OnDisable()
@@ -78,6 +86,8 @@ namespace Nibrask.AR
 
             if (planeManager != null)
                 planeManager.trackablesChanged.RemoveListener(OnPlanesChanged);
+
+            EnhancedTouchSupport.Disable();
         }
 
         private void Start()
@@ -171,18 +181,17 @@ namespace Nibrask.AR
         /// </summary>
         private void HandleAnchorPlacement()
         {
-            if (Input.touchCount == 0) return;
+            var activeTouches = Touch.activeTouches;
+            if (activeTouches.Count == 0) return;
 
-            Touch touch = Input.GetTouch(0);
-            if (touch.phase != TouchPhase.Began) return;
+            var touch = activeTouches[0];
+            if (touch.phase != UnityEngine.InputSystem.TouchPhase.Began) return;
 
-            // NOTE: We intentionally skip EventSystem.IsPointerOverGameObject() here.
-            // During Scanning, the OnboardingUI canvas has blocksRaycasts=false and
-            // GraphicRaycaster disabled, so no UI elements should intercept this touch.
-            // The EventSystem check was causing false positives that silently blocked all taps.
-            Debug.Log($"[AREnvironmentManager] User tapped screen at {touch.position}. Performing AR Raycast...");
+            Vector2 screenPos = touch.screenPosition;
 
-            if (RaycastFromScreen(touch.position, out Pose hitPose))
+            Debug.Log($"[AREnvironmentManager] User tapped screen at {screenPos}. Performing AR Raycast...");
+
+            if (RaycastFromScreen(screenPos, out Pose hitPose))
             {
                 Debug.Log($"[AREnvironmentManager] AR Raycast hit plane at {hitPose.position}! Placing anchor.");
                 PlaceTerminalAnchor(hitPose);
@@ -273,19 +282,19 @@ namespace Nibrask.AR
                     floorDetected = true;
                     Debug.Log($"[AREnvironmentManager] Floor plane detected (area: {plane.size.x * plane.size.y:F2}m²)");
                     AppEvents.RaiseFloorDetected();
-                    break;
+                    return; // Don't check updated planes — already found
                 }
             }
 
             foreach (var plane in eventArgs.updated)
             {
-                if (plane.alignment == UnityEngine.XR.ARSubsystems.PlaneAlignment.HorizontalUp &&
+                if (plane.alignment == PlaneAlignment.HorizontalUp &&
                     plane.size.x * plane.size.y >= minPlaneAreaForDetection)
                 {
                     floorDetected = true;
                     Debug.Log($"[AREnvironmentManager] Floor plane detected via update (area: {plane.size.x * plane.size.y:F2}m²)");
                     AppEvents.RaiseFloorDetected();
-                    break;
+                    return;
                 }
             }
         }
