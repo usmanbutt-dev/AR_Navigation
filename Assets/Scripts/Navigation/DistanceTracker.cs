@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Nibrask.Core;
+using Nibrask.Data;
 
 namespace Nibrask.Navigation
 {
