@@ -77,6 +77,8 @@ namespace Nibrask.Navigation
         private bool isTracking = false;
         private float nextUpdateTime;
         private bool wasOffRoute = false;
+        private bool hasArrived = false;
+        private DestinationData trackedDestination;
 
         private void Start()
         {
@@ -101,8 +103,10 @@ namespace Nibrask.Navigation
 
         /// <summary>
         /// Starts tracking the user's position against a navigation path.
+        /// destination is passed explicitly so arrival does not depend on the waypoint's
+        /// associatedDestination back-reference, which may be null.
         /// </summary>
-        public void StartTracking(List<WaypointNode> path)
+        public void StartTracking(List<WaypointNode> path, DestinationData destination)
         {
             if (path == null || path.Count == 0)
             {
@@ -111,9 +115,11 @@ namespace Nibrask.Navigation
             }
 
             currentPath = new List<WaypointNode>(path);
+            trackedDestination = destination;
             currentCheckpointIndex = 0;
             isOffRoute = false;
             wasOffRoute = false;
+            hasArrived = false;
             isTracking = true;
             nextUpdateTime = 0f;
 
@@ -131,13 +137,24 @@ namespace Nibrask.Navigation
 
         /// <summary>
         /// Updates the path when a recalculation occurs.
+        /// destination is kept from the original StartTracking call; if a new
+        /// destination is provided it overrides the tracked one.
         /// </summary>
-        public void UpdatePath(List<WaypointNode> newPath)
+        public void UpdatePath(List<WaypointNode> newPath, DestinationData destination = null)
         {
+            if (newPath == null || newPath.Count == 0)
+            {
+                Debug.LogWarning("[DistanceTracker] UpdatePath received null/empty path — recalculation failed.");
+                AppEvents.RaiseRecalculationFailed();
+                return;
+            }
+
             currentPath = new List<WaypointNode>(newPath);
+            if (destination != null) trackedDestination = destination;
             currentCheckpointIndex = 0;
             isOffRoute = false;
             wasOffRoute = false;
+            hasArrived = false;
         }
 
         /// <summary>
@@ -183,16 +200,19 @@ namespace Nibrask.Navigation
             }
 
             // 7. Check arrival condition
-            if (currentPath.Count > 0)
+            if (!hasArrived && currentPath.Count > 0)
             {
-                WaypointNode destination = currentPath[currentPath.Count - 1];
-                float distToDest = Vector3.Distance(userPos, destination.WorldPosition);
+                WaypointNode destinationNode = currentPath[currentPath.Count - 1];
+                float distToDest = Vector3.Distance(userPos, destinationNode.WorldPosition);
 
                 if (distToDest <= arrivalDistance)
                 {
-                    Debug.Log("[DistanceTracker] User has ARRIVED at destination.");
+                    hasArrived = true;
                     isTracking = false;
-                    AppEvents.RaiseArrived(destination.associatedDestination);
+                    Debug.Log("[DistanceTracker] User has ARRIVED at destination.");
+                    // Use the explicitly tracked destination (safe), fall back to node's association
+                    var dest = trackedDestination ?? destinationNode.associatedDestination;
+                    AppEvents.RaiseArrived(dest);
                 }
             }
         }

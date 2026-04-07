@@ -93,7 +93,13 @@ namespace Nibrask.Navigation
             switch (newState)
             {
                 case AppState.Navigating:
-                    // Navigation is started by HandleDestinationSelected
+                    // Start navigation using the destination stored by AppStateManager.
+                    // This is safer than relying on OnDestinationSelected handler ordering.
+                    var dest = AppStateManager.Instance?.SelectedDestination;
+                    if (dest != null)
+                        StartNavigation(dest);
+                    else
+                        Debug.LogError("[NavigationManager] Navigating state reached but SelectedDestination is null.");
                     break;
 
                 case AppState.Arrival:
@@ -106,12 +112,14 @@ namespace Nibrask.Navigation
         }
 
         /// <summary>
-        /// Handles destination selection — computes and displays the route.
+        /// Handles destination selection — stores destination for reference but does NOT start
+        /// navigation here. Navigation is started in HandleStateChanged(Navigating) to avoid
+        /// fragile event ordering dependencies.
         /// </summary>
         private void HandleDestinationSelected(DestinationData destination)
         {
             CurrentDestination = destination;
-            StartNavigation(destination);
+            // Navigation will be started when AppStateManager transitions to Navigating state.
         }
 
         /// <summary>
@@ -167,8 +175,8 @@ namespace Nibrask.Navigation
             pathRenderer?.RenderPath(CurrentPath);
             arrowGenerator?.GenerateArrows(CurrentPath);
 
-            // Start tracking the user's progress
-            distanceTracker?.StartTracking(CurrentPath);
+            // Start tracking the user's progress, passing destination explicitly for safe arrival
+            distanceTracker?.StartTracking(CurrentPath, destination);
 
             isNavigating = true;
             lastRecalculationTime = Time.time;
