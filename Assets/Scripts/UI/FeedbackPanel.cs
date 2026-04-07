@@ -64,6 +64,11 @@ namespace Nibrask.UI
         [SerializeField]
         private float slideSpeed = 800f;
 
+        [Header("References")]
+        [SerializeField]
+        [Tooltip("Assign the NavigationManager from the scene — avoids expensive FindAnyObjectByType calls (Fix #10)")]
+        private Nibrask.Navigation.NavigationManager navigationManager;
+
         private Queue<ToastMessage> messageQueue = new Queue<ToastMessage>();
         private bool isShowingToast = false;
         private int totalCheckpoints = 0;
@@ -83,6 +88,7 @@ namespace Nibrask.UI
             AppEvents.OnOffRoute += HandleOffRoute;
             AppEvents.OnBackOnRoute += HandleBackOnRoute;
             AppEvents.OnRouteRecalculated += HandleRouteRecalculated;
+            AppEvents.OnRecalculationFailed += HandleRecalculationFailed; // Fix #11
             AppEvents.OnArrived += HandleArrived;
 
             if (AppStateManager.Instance != null)
@@ -96,6 +102,7 @@ namespace Nibrask.UI
             AppEvents.OnOffRoute -= HandleOffRoute;
             AppEvents.OnBackOnRoute -= HandleBackOnRoute;
             AppEvents.OnRouteRecalculated -= HandleRouteRecalculated;
+            AppEvents.OnRecalculationFailed -= HandleRecalculationFailed; // Fix #11
             AppEvents.OnArrived -= HandleArrived;
 
             if (AppStateManager.Instance != null)
@@ -204,10 +211,10 @@ namespace Nibrask.UI
         {
             gameObject.SetActive(true);
             passedCheckpoints = 0;
-            // Total checkpoints estimated from the navigation manager
-            var navMgr = FindAnyObjectByType<Nibrask.Navigation.NavigationManager>();
-            if (navMgr != null && navMgr.CurrentPath != null)
-                totalCheckpoints = navMgr.CurrentPath.Count;
+
+            // Use the serialized reference instead of the expensive FindAnyObjectByType (Fix #10)
+            if (navigationManager != null && navigationManager.CurrentPath != null)
+                totalCheckpoints = navigationManager.CurrentPath.Count;
 
             UpdateProgressBar();
             ShowToast("🧭 Navigation started", successColor, 2f);
@@ -249,6 +256,19 @@ namespace Nibrask.UI
 
             if (offRouteWarning != null)
                 offRouteWarning.SetActive(false);
+        }
+
+        private void HandleRecalculationFailed()
+        {
+            // Fix #11: Clear the off-route warning when recalculation fails so the UI doesn't
+            // get permanently stuck showing the warning banner with no follow-up feedback.
+            ShowToast("⚠️ Could not find a path. Try moving closer to the route.", warningColor, 4f);
+
+            if (offRouteWarning != null)
+            {
+                if (offRouteText != null)
+                    offRouteText.text = "No path found — please move to a different area";
+            }
         }
 
         private void HandleArrived(Data.DestinationData destination)

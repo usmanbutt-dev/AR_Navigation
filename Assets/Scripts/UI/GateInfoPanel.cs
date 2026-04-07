@@ -63,11 +63,13 @@ namespace Nibrask.UI
             if (AppStateManager.Instance != null)
                 AppStateManager.Instance.OnStateChanged += HandleStateChanged;
 
-            AppEvents.OnDestinationSelected += HandleDestinationSelected;
+            // Note: OnDestinationSelected subscription removed — Show() is triggered exclusively
+            // from HandleStateChanged(Navigating) to prevent being called twice (Fix #6)
             AppEvents.OnDistanceUpdated += HandleDistanceUpdated;
             AppEvents.OnOffRoute += HandleOffRoute;
             AppEvents.OnBackOnRoute += HandleBackOnRoute;
             AppEvents.OnRouteRecalculated += HandleRouteRecalculated;
+            AppEvents.OnRecalculationFailed += HandleRecalculationFailed; // Fix #11
         }
 
         private void OnDisable()
@@ -75,11 +77,11 @@ namespace Nibrask.UI
             if (AppStateManager.Instance != null)
                 AppStateManager.Instance.OnStateChanged -= HandleStateChanged;
 
-            AppEvents.OnDestinationSelected -= HandleDestinationSelected;
             AppEvents.OnDistanceUpdated -= HandleDistanceUpdated;
             AppEvents.OnOffRoute -= HandleOffRoute;
             AppEvents.OnBackOnRoute -= HandleBackOnRoute;
             AppEvents.OnRouteRecalculated -= HandleRouteRecalculated;
+            AppEvents.OnRecalculationFailed -= HandleRecalculationFailed; // Fix #11
         }
 
         private void Update()
@@ -220,10 +222,8 @@ namespace Nibrask.UI
             }
         }
 
-        private void HandleDestinationSelected(DestinationData destination)
-        {
-            Show(destination);
-        }
+        // HandleDestinationSelected removed — Show() is now driven solely by HandleStateChanged
+        // to prevent the panel from being positioned twice in a single frame (Fix #6)
 
         private void HandleDistanceUpdated(float distanceMeters, float estimatedTimeSeconds)
         {
@@ -274,6 +274,17 @@ namespace Nibrask.UI
 
                 // Reset to normal after a delay
                 Invoke(nameof(ResetStatusText), 2f);
+            }
+        }
+
+        private void HandleRecalculationFailed()
+        {
+            // Fix #11: Reset status text when no path found so it isn't permanently stuck
+            // on "Off route — recalculating..."
+            if (statusText != null)
+            {
+                statusText.text = "⚠️ No path found";
+                statusText.color = new Color(1.0f, 0.4f, 0.1f);
             }
         }
 

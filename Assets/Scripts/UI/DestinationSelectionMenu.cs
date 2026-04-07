@@ -122,10 +122,12 @@ namespace Nibrask.UI
             }
 
             // Add gate category label
-            if (categoryLabelGates != null && gates.Count > 0)
+            if (categoryLabelGates != null)
             {
-                categoryLabelGates.gameObject.SetActive(true);
-                categoryLabelGates.text = $"🛫 Gates ({gates.Count})";
+                // Always set explicitly so stale labels from a previous Show() are cleared (Fix #12)
+                categoryLabelGates.gameObject.SetActive(gates.Count > 0);
+                if (gates.Count > 0)
+                    categoryLabelGates.text = $"🛫 Gates ({gates.Count})";
             }
 
             foreach (var gate in gates)
@@ -134,10 +136,12 @@ namespace Nibrask.UI
             }
 
             // Add services category label
-            if (categoryLabelServices != null && services.Count > 0)
+            if (categoryLabelServices != null)
             {
-                categoryLabelServices.gameObject.SetActive(true);
-                categoryLabelServices.text = $"📍 Services ({services.Count})";
+                // Always set explicitly so stale labels from a previous Show() are cleared (Fix #12)
+                categoryLabelServices.gameObject.SetActive(services.Count > 0);
+                if (services.Count > 0)
+                    categoryLabelServices.text = $"📍 Services ({services.Count})";
             }
 
             foreach (var service in services)
@@ -166,6 +170,7 @@ namespace Nibrask.UI
             targetAlpha = 0f;
             targetScale = Vector3.one * 0.8f;
 
+            CancelInvoke(nameof(DeactivateSelf)); // Prevent stale timers hiding re-shown menu (Fix #5)
             Invoke(nameof(DeactivateSelf), 0.5f);
         }
 

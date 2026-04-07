@@ -176,11 +176,13 @@ namespace Nibrask.UI
         }
 
         /// <summary>
-        /// Auto-dismiss callback.
+        /// Auto-dismiss callback — hides the panel after the timeout but does NOT
+        /// silently re-enter the navigation flow. The user must press the button to continue.
+        /// (Fix #8: was calling OnNavigateAgainClicked which fired RaiseNavigateAgain unexpectedly)
         /// </summary>
         private void AutoDismiss()
         {
-            OnNavigateAgainClicked();
+            Hide();
         }
 
         /// <summary>
