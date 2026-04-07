@@ -164,8 +164,11 @@ namespace Nibrask.UI
             targetAlpha = 1f;
 
             // Re-enable UI interaction
-            var raycaster = GetComponent<GraphicRaycaster>();
+            var raycaster = GetComponentInParent<GraphicRaycaster>();
             if (raycaster != null) raycaster.enabled = true;
+
+            if (canvasGroup != null)
+                canvasGroup.blocksRaycasts = true;
         }
 
         /// <summary>
@@ -198,8 +201,11 @@ namespace Nibrask.UI
             floorFound = false;
 
             // Disable raycaster so the UI doesn't eat the AR screen taps (Fix for AR anchor placement)
-            var raycaster = GetComponent<GraphicRaycaster>();
+            var raycaster = GetComponentInParent<GraphicRaycaster>();
             if (raycaster != null) raycaster.enabled = false;
+
+            if (canvasGroup != null)
+                canvasGroup.blocksRaycasts = false;
         }
 
         /// <summary>
