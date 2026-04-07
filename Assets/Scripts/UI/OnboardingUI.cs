@@ -64,7 +64,11 @@ namespace Nibrask.UI
             AppEvents.OnFloorDetected += HandleFloorDetected;
 
             if (startButton != null)
+            {
+                // Remove before adding to prevent duplicate listeners on re-enable (Fix #9)
+                startButton.onClick.RemoveListener(OnStartButtonClicked);
                 startButton.onClick.AddListener(OnStartButtonClicked);
+            }
         }
 
         private void OnDisable()
@@ -81,6 +85,11 @@ namespace Nibrask.UI
         private void Start()
         {
             SetupWelcomePanel();
+
+            // Sync to the current state in case we missed the initial OnStateChanged event
+            // due to Unity's non-deterministic script execution order (Fix #1)
+            if (AppStateManager.Instance != null)
+                HandleStateChanged(AppState.Onboarding, AppStateManager.Instance.CurrentState);
         }
 
         private void Update()
@@ -208,6 +217,7 @@ namespace Nibrask.UI
                 case AppState.Arrival:
                     // Fade out and hide
                     targetAlpha = 0f;
+                    CancelInvoke(nameof(HideSelf)); // Prevent stacking timers (Fix #5)
                     Invoke(nameof(HideSelf), 0.5f);
                     break;
             }
