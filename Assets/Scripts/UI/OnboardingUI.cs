@@ -56,6 +56,18 @@ namespace Nibrask.UI
         private float scanProgress = 0f;
         private float targetAlpha = 1f;
 
+        // Cached components
+        private GraphicRaycaster graphicRaycaster;
+        private CanvasGroup activeCanvasGroup;
+
+        private void Awake()
+        {
+            // Cache components at Awake so fixes work even if Inspector refs not set
+            graphicRaycaster = GetComponent<GraphicRaycaster>();
+            // Use serialized canvasGroup if set, otherwise find it
+            activeCanvasGroup = canvasGroup != null ? canvasGroup : GetComponent<CanvasGroup>();
+        }
+
         private void OnEnable()
         {
             // Subscribe if AppStateManager already exists (re-enables, mid-session)
@@ -164,14 +176,12 @@ namespace Nibrask.UI
             targetAlpha = 1f;
 
             // Restore full UI interaction for the welcome screen
-            var raycaster = GetComponent<GraphicRaycaster>();
-            if (raycaster != null) raycaster.enabled = true;
+            if (graphicRaycaster != null) graphicRaycaster.enabled = true;
 
-            // Restore CanvasGroup blocking so the Start button is interactable
-            if (canvasGroup != null)
+            if (activeCanvasGroup != null)
             {
-                canvasGroup.blocksRaycasts = true;
-                canvasGroup.interactable = true;
+                activeCanvasGroup.blocksRaycasts = true;
+                activeCanvasGroup.interactable = true;
             }
         }
 
@@ -204,16 +214,15 @@ namespace Nibrask.UI
             scanProgress = 0f;
             floorFound = false;
 
-            // CRITICAL: Disable ALL raycast blocking during Scanning so AR taps reach the world.
-            // Both the GraphicRaycaster AND the CanvasGroup need to be disabled otherwise
-            // CanvasGroup.blocksRaycasts=true silently eats every touch on its transparent background.
-            var raycaster = GetComponent<GraphicRaycaster>();
-            if (raycaster != null) raycaster.enabled = false;
+            // CRITICAL: Disable ALL input blocking so AR taps reach the world
+            // during the Scanning state. Uses cached refs so this works even if
+            // the Inspector fields weren't assigned.
+            if (graphicRaycaster != null) graphicRaycaster.enabled = false;
 
-            if (canvasGroup != null)
+            if (activeCanvasGroup != null)
             {
-                canvasGroup.blocksRaycasts = false;
-                canvasGroup.interactable = false;
+                activeCanvasGroup.blocksRaycasts = false;
+                activeCanvasGroup.interactable = false;
             }
         }
 

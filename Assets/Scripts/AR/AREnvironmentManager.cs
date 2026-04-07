@@ -176,17 +176,11 @@ namespace Nibrask.AR
             Touch touch = Input.GetTouch(0);
             if (touch.phase != TouchPhase.Began) return;
 
-            Debug.Log($"[AREnvironmentManager] User tapped screen at {touch.position}. Checking for UI overlap...");
-
-            // Don't place anchor if touching UI
-            if (UnityEngine.EventSystems.EventSystem.current != null &&
-                UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject(touch.fingerId))
-            {
-                Debug.LogWarning("[AREnvironmentManager] Tap ignored: EventSystem reported tap was over a UI element. (An invisible UI panel might be eating the raycast)");
-                return;
-            }
-
-            Debug.Log("[AREnvironmentManager] Tap was not on UI. Performing AR Raycast to find a plane...");
+            // NOTE: We intentionally skip EventSystem.IsPointerOverGameObject() here.
+            // During Scanning, the OnboardingUI canvas has blocksRaycasts=false and
+            // GraphicRaycaster disabled, so no UI elements should intercept this touch.
+            // The EventSystem check was causing false positives that silently blocked all taps.
+            Debug.Log($"[AREnvironmentManager] User tapped screen at {touch.position}. Performing AR Raycast...");
 
             if (RaycastFromScreen(touch.position, out Pose hitPose))
             {
@@ -195,7 +189,7 @@ namespace Nibrask.AR
             }
             else
             {
-                Debug.LogWarning("[AREnvironmentManager] AR Raycast failed to hit any TrackableType.PlaneWithinPolygon.");
+                Debug.LogWarning("[AREnvironmentManager] AR Raycast failed — tap was outside all detected planes.");
             }
         }
 
