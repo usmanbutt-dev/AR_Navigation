@@ -50,7 +50,9 @@ namespace Nibrask.UI
 
             if (directionToCamera.sqrMagnitude < 0.001f) return;
 
-            Quaternion targetRotation = Quaternion.LookRotation(directionToCamera);
+            // Invert the direction because UI elements (Canvas) have their visual front facing -Z.
+            // If we point +Z at the camera, the UI is backwards. We point -Z at the camera.
+            Quaternion targetRotation = Quaternion.LookRotation(-directionToCamera);
 
             if (smoothRotation)
             {

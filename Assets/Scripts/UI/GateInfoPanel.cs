@@ -39,7 +39,7 @@ namespace Nibrask.UI
         [Header("Positioning")]
         [SerializeField]
         [Tooltip("Offset from camera position")]
-        private Vector3 cameraOffset = new Vector3(0.3f, -0.1f, 0.8f);
+        private Vector3 cameraOffset = new Vector3(0f, -0.1f, 0.8f);
 
         [SerializeField]
         [Tooltip("Smooth follow speed")]
@@ -140,7 +140,7 @@ namespace Nibrask.UI
             {
                 transform.rotation = Quaternion.Slerp(
                     transform.rotation,
-                    Quaternion.LookRotation(lookDir),
+                    Quaternion.LookRotation(-lookDir), // Invert LookDir for UI Canvas
                     Time.deltaTime * followSpeed
                 );
             }

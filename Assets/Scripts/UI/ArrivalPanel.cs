@@ -128,7 +128,7 @@ namespace Nibrask.UI
                 forward.Normalize();
 
                 transform.position = cam.transform.position + forward * distanceFromCamera;
-                transform.rotation = Quaternion.LookRotation(forward);
+                transform.rotation = Quaternion.LookRotation(-forward); // Invert forward for UI Canvases
             }
 
             // Set text content
