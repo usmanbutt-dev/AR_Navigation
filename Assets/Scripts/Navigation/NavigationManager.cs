@@ -55,6 +55,13 @@ namespace Nibrask.Navigation
         private void Start()
         {
             userTransform = Camera.main?.transform;
+
+            // Fallback subscription: OnEnable might run before AppStateManager.Awake() sets Instance
+            if (AppStateManager.Instance != null)
+            {
+                AppStateManager.Instance.OnStateChanged -= HandleStateChanged;
+                AppStateManager.Instance.OnStateChanged += HandleStateChanged;
+            }
         }
 
         private void OnEnable()
