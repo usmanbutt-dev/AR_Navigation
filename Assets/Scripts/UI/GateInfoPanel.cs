@@ -186,7 +186,7 @@ namespace Nibrask.UI
                 distanceText.text = "Calculating...";
 
             if (walkingTimeText != null)
-                walkingTimeText.text = "⏱️ --:--";
+                walkingTimeText.text = "Time: --:--";
 
             if (statusText != null)
             {
@@ -271,9 +271,9 @@ namespace Nibrask.UI
             if (distanceText != null)
             {
                 if (distanceMeters >= 1000f)
-                    distanceText.text = $"📏 {distanceMeters / 1000f:F1} km";
+                    distanceText.text = $"Distance: {distanceMeters / 1000f:F1} km";
                 else
-                    distanceText.text = $"📏 {distanceMeters:F0} m";
+                    distanceText.text = $"Distance: {distanceMeters:F0} m";
             }
 
             if (walkingTimeText != null)
@@ -282,9 +282,9 @@ namespace Nibrask.UI
                 int seconds = Mathf.FloorToInt(estimatedTimeSeconds % 60f);
 
                 if (minutes > 0)
-                    walkingTimeText.text = $"🚶 {minutes} min {seconds} sec";
+                    walkingTimeText.text = $"Time: {minutes}m {seconds}s";
                 else
-                    walkingTimeText.text = $"🚶 {seconds} sec";
+                    walkingTimeText.text = $"Time: {seconds}s";
             }
         }
 
@@ -292,7 +292,7 @@ namespace Nibrask.UI
         {
             if (statusText != null)
             {
-                statusText.text = "⚠️ Off route — recalculating...";
+                statusText.text = "Error: Off route — recalculating...";
                 statusText.color = new Color(1.0f, 0.4f, 0.1f);
             }
         }
@@ -301,7 +301,7 @@ namespace Nibrask.UI
         {
             if (statusText != null)
             {
-                statusText.text = "✓ Back on route";
+                statusText.text = "Success: Back on route";
                 statusText.color = new Color(0.0f, 0.9f, 0.4f);
             }
         }
@@ -310,7 +310,7 @@ namespace Nibrask.UI
         {
             if (statusText != null)
             {
-                statusText.text = "🔄 Route updated";
+                statusText.text = "Updating: Route updated";
                 statusText.color = new Color(0.0f, 0.7f, 0.9f);
 
                 // Reset to normal after a delay (cancel any pending reset first)
@@ -325,7 +325,7 @@ namespace Nibrask.UI
             // on "Off route — recalculating..."
             if (statusText != null)
             {
-                statusText.text = "⚠️ No path found";
+                statusText.text = "Error: No path found";
                 statusText.color = new Color(1.0f, 0.4f, 0.1f);
             }
         }

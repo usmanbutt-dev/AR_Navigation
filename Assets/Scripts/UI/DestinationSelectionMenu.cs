@@ -148,7 +148,7 @@ namespace Nibrask.UI
                 // Always set explicitly so stale labels from a previous Show() are cleared (Fix #12)
                 categoryLabelGates.gameObject.SetActive(gates.Count > 0);
                 if (gates.Count > 0)
-                    categoryLabelGates.text = $"🛫 Gates ({gates.Count})";
+                    categoryLabelGates.text = $"Gates ({gates.Count})";
             }
 
             foreach (var gate in gates)
@@ -162,7 +162,7 @@ namespace Nibrask.UI
                 // Always set explicitly so stale labels from a previous Show() are cleared (Fix #12)
                 categoryLabelServices.gameObject.SetActive(services.Count > 0);
                 if (services.Count > 0)
-                    categoryLabelServices.text = $"📍 Services ({services.Count})";
+                    categoryLabelServices.text = $"Services ({services.Count})";
             }
 
             foreach (var service in services)
@@ -243,7 +243,7 @@ namespace Nibrask.UI
                 }
                 else
                 {
-                    displayText = $"🛫 {destination.destinationName}";
+                    displayText = $"Gate: {destination.destinationName}";
                     if (!string.IsNullOrEmpty(destination.flightNumber))
                         displayText += $"\n{destination.flightNumber}";
                     if (!string.IsNullOrEmpty(destination.boardingTime))

@@ -135,7 +135,7 @@ namespace Nibrask.UI
 
             // Set text content
             if (arrivalTitleText != null)
-                arrivalTitleText.text = "🎉  You have arrived!";
+                arrivalTitleText.text = "You have arrived!";
 
             if (arrivalMessageText != null)
                 arrivalMessageText.text = $"Welcome to";
