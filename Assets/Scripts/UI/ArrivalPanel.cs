@@ -51,6 +51,17 @@ namespace Nibrask.UI
         private float checkmarkTargetScale = 0f;
         private bool isShowing = false;
 
+        private void Awake()
+        {
+            // Start visually hidden but keep GO active for subscriptions
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 0f;
+                canvasGroup.interactable = false;
+                canvasGroup.blocksRaycasts = false;
+            }
+        }
+
         private void OnEnable()
         {
             if (AppStateManager.Instance != null)
@@ -106,7 +117,6 @@ namespace Nibrask.UI
         {
             if (isShowing) return;
 
-            gameObject.SetActive(true);
             isShowing = true;
 
             // Position in front of camera
@@ -223,7 +233,14 @@ namespace Nibrask.UI
         private void DeactivateSelf()
         {
             if (!isShowing)
-                gameObject.SetActive(false);
+            {
+                if (canvasGroup != null)
+                {
+                    canvasGroup.alpha = 0f;
+                    canvasGroup.interactable = false;
+                    canvasGroup.blocksRaycasts = false;
+                }
+            }
         }
     }
 }

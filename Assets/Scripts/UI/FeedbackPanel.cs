@@ -218,7 +218,8 @@ namespace Nibrask.UI
 
         private void HandleNavigationStarted()
         {
-            gameObject.SetActive(true);
+            if (toastContainer != null) toastContainer.gameObject.SetActive(true);
+            if (progressBarFill != null) progressBarFill.transform.parent.gameObject.SetActive(true);
             passedCheckpoints = 0;
 
             // Use the serialized reference instead of the expensive FindAnyObjectByType (Fix #10)
@@ -288,12 +289,12 @@ namespace Nibrask.UI
                 offRouteWarning.SetActive(false);
         }
 
-        private void HandleStateChanged(AppState oldState, AppState newState)
+         private void HandleStateChanged(AppState oldState, AppState newState)
         {
             switch (newState)
             {
                 case AppState.Navigating:
-                    gameObject.SetActive(true);
+                    // Children will be shown by HandleNavigationStarted
                     break;
 
                 case AppState.Arrival:
@@ -304,7 +305,9 @@ namespace Nibrask.UI
                     StopAllCoroutines();
                     isShowingToast = false;
                     messageQueue.Clear();
-                    gameObject.SetActive(false);
+                    // Hide visual children but keep GO active for subscriptions
+                    if (toastContainer != null) toastContainer.gameObject.SetActive(false);
+                    if (offRouteWarning != null) offRouteWarning.SetActive(false);
                     break;
             }
         }

@@ -58,6 +58,18 @@ namespace Nibrask.UI
         private float targetAlpha = 0f;
         private Vector3 targetScale = Vector3.zero;
 
+        private void Awake()
+        {
+            // Start hidden visually but keep GameObject active so OnEnable/Start subscriptions work
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 0f;
+                canvasGroup.interactable = false;
+                canvasGroup.blocksRaycasts = false;
+            }
+            transform.localScale = Vector3.zero;
+        }
+
         private void OnEnable()
         {
             if (AppStateManager.Instance != null)
@@ -163,7 +175,6 @@ namespace Nibrask.UI
             targetAlpha = 1f;
             targetScale = Vector3.one;
             transform.localScale = Vector3.one * 0.5f;
-            gameObject.SetActive(true);
 
             Debug.Log($"[DestinationSelectionMenu] Showing {mapData.destinations.Count} destinations.");
         }
@@ -339,7 +350,16 @@ namespace Nibrask.UI
         private void DeactivateSelf()
         {
             if (!isVisible)
-                gameObject.SetActive(false);
+            {
+                // Visually hide but keep GO active so subscriptions stay alive
+                if (canvasGroup != null)
+                {
+                    canvasGroup.alpha = 0f;
+                    canvasGroup.interactable = false;
+                    canvasGroup.blocksRaycasts = false;
+                }
+                transform.localScale = Vector3.zero;
+            }
         }
     }
 }

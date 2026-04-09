@@ -283,7 +283,16 @@ namespace Nibrask.UI
 
         private void HideSelf()
         {
-            gameObject.SetActive(false);
+            // Visually hide but keep GO active so subscriptions survive
+            if (activeCanvasGroup != null)
+            {
+                activeCanvasGroup.alpha = 0f;
+                activeCanvasGroup.blocksRaycasts = false;
+                activeCanvasGroup.interactable = false;
+            }
+            if (graphicRaycaster != null) graphicRaycaster.enabled = false;
+            if (welcomePanel != null) welcomePanel.SetActive(false);
+            if (scanningPanel != null) scanningPanel.SetActive(false);
             isScanning = false;
         }
     }

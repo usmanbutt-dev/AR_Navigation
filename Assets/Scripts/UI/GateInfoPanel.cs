@@ -58,6 +58,17 @@ namespace Nibrask.UI
         private bool isMinimized = false;
         private Vector3 targetPosition;
 
+        private void Awake()
+        {
+            // Start visually hidden but keep GO active for subscriptions
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 0f;
+                canvasGroup.interactable = false;
+                canvasGroup.blocksRaycasts = false;
+            }
+        }
+
         private void OnEnable()
         {
             if (AppStateManager.Instance != null)
@@ -141,7 +152,6 @@ namespace Nibrask.UI
         public void Show(DestinationData destination)
         {
             currentDestination = destination;
-            gameObject.SetActive(true);
 
             if (destinationNameText != null)
                 destinationNameText.text = destination.destinationName;
@@ -311,7 +321,14 @@ namespace Nibrask.UI
         private void DeactivateSelf()
         {
             if (targetAlpha <= 0f)
-                gameObject.SetActive(false);
+            {
+                if (canvasGroup != null)
+                {
+                    canvasGroup.alpha = 0f;
+                    canvasGroup.interactable = false;
+                    canvasGroup.blocksRaycasts = false;
+                }
+            }
         }
     }
 }
