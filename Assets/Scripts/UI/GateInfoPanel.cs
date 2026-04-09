@@ -121,8 +121,8 @@ namespace Nibrask.UI
 
         /// <summary>
         /// Smoothly follows the camera with an offset.
-        /// Positions use local space relative to the parent canvas to handle
-        /// the 0.001 scale on Canvas_WorldSpace correctly.
+        /// Uses transform.position which Unity handles correctly even on
+        /// children of scaled parents (Canvas_WorldSpace at 0.001 scale).
         /// </summary>
         private void UpdatePosition()
         {
@@ -132,25 +132,16 @@ namespace Nibrask.UI
             // Calculate desired world position relative to camera
             Vector3 desiredWorldPos = cam.transform.TransformPoint(cameraOffset);
 
-            // Convert to local space so the parent canvas scale (0.001) is respected
-            if (transform.parent != null)
-            {
-                Vector3 desiredLocalPos = transform.parent.InverseTransformPoint(desiredWorldPos);
-                Vector3 currentLocalPos = transform.localPosition;
-                transform.localPosition = Vector3.Lerp(currentLocalPos, desiredLocalPos, Time.deltaTime * followSpeed);
-            }
-            else
-            {
-                transform.position = Vector3.Lerp(transform.position, desiredWorldPos, Time.deltaTime * followSpeed);
-            }
+            // Smooth follow — transform.position handles parent scale internally
+            transform.position = Vector3.Lerp(transform.position, desiredWorldPos, Time.deltaTime * followSpeed);
 
-            // Face the camera (use world positions for direction calculation)
-            Vector3 worldPos = transform.position;
-            Vector3 lookDir = cam.transform.position - worldPos;
+            // Face the camera
+            Vector3 lookDir = cam.transform.position - transform.position;
             lookDir.y = 0f;
             if (lookDir.sqrMagnitude > 0.001f)
             {
-                // Negate direction because UI Canvas front face is -Z
+                // -lookDir makes +Z point AWAY from camera,
+                // so the UI visible side (-Z local) faces the camera
                 transform.rotation = Quaternion.Slerp(
                     transform.rotation,
                     Quaternion.LookRotation(-lookDir),
@@ -211,23 +202,22 @@ namespace Nibrask.UI
                 canvasGroup.blocksRaycasts = true;
             }
 
-            // Snap position and rotation immediately so the panel doesn't appear off-screen
+            // Snap position and rotation immediately
             var cam = Camera.main;
             if (cam != null)
             {
                 Vector3 desiredWorldPos = cam.transform.TransformPoint(cameraOffset);
+                transform.position = desiredWorldPos;
 
-                // Convert to local space to account for parent canvas scale (0.001)
-                if (transform.parent != null)
-                    transform.localPosition = transform.parent.InverseTransformPoint(desiredWorldPos);
-                else
-                    transform.position = desiredWorldPos;
-
-                // Snap rotation immediately — face camera from the start
+                // Snap rotation — face camera immediately
                 Vector3 lookDir = cam.transform.position - transform.position;
                 lookDir.y = 0f;
                 if (lookDir.sqrMagnitude > 0.001f)
                     transform.rotation = Quaternion.LookRotation(-lookDir);
+
+                Debug.Log($"[GateInfoPanel] Show() — cam={cam.transform.position}, " +
+                          $"offset={cameraOffset}, worldPos={desiredWorldPos}, " +
+                          $"localPos={transform.localPosition}, rot={transform.eulerAngles}");
             }
         }
 

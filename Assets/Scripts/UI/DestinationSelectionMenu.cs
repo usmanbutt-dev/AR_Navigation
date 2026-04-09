@@ -196,7 +196,7 @@ namespace Nibrask.UI
 
         /// <summary>
         /// Positions the menu in front of the AR camera.
-        /// Uses InverseTransformPoint to correctly handle the parent canvas scale (0.001).
+        /// Billboard component handles continuous rotation in LateUpdate.
         /// </summary>
         private void PositionInFrontOfCamera()
         {
@@ -207,16 +207,10 @@ namespace Nibrask.UI
             forward.y = 0f;
             forward.Normalize();
 
-            Vector3 desiredWorldPos = cam.transform.position + forward * distanceFromCamera + Vector3.up * heightOffset;
+            transform.position = cam.transform.position + forward * distanceFromCamera + Vector3.up * heightOffset;
 
-            // Convert to local space to account for parent canvas scale (0.001)
-            if (transform.parent != null)
-                transform.localPosition = transform.parent.InverseTransformPoint(desiredWorldPos);
-            else
-                transform.position = desiredWorldPos;
-
-            // Negate forward because UI Canvas front face is -Z
-            transform.rotation = Quaternion.LookRotation(-forward);
+            // +forward makes +Z point away from camera → UI (-Z local) faces camera
+            transform.rotation = Quaternion.LookRotation(forward);
         }
 
         /// <summary>
