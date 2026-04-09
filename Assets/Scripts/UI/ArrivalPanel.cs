@@ -127,8 +127,16 @@ namespace Nibrask.UI
                 forward.y = 0f;
                 forward.Normalize();
 
-                transform.position = cam.transform.position + forward * distanceFromCamera;
-                transform.rotation = Quaternion.LookRotation(-forward); // Invert forward for UI Canvases
+                Vector3 desiredWorldPos = cam.transform.position + forward * distanceFromCamera;
+
+                // Convert to local space to account for parent canvas scale (0.001)
+                if (transform.parent != null)
+                    transform.localPosition = transform.parent.InverseTransformPoint(desiredWorldPos);
+                else
+                    transform.position = desiredWorldPos;
+
+                // Negate forward because UI Canvas front face is -Z
+                transform.rotation = Quaternion.LookRotation(-forward);
             }
 
             // Set text content

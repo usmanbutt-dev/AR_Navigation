@@ -121,26 +121,39 @@ namespace Nibrask.UI
 
         /// <summary>
         /// Smoothly follows the camera with an offset.
+        /// Positions use local space relative to the parent canvas to handle
+        /// the 0.001 scale on Canvas_WorldSpace correctly.
         /// </summary>
         private void UpdatePosition()
         {
             var cam = Camera.main;
             if (cam == null) return;
 
-            // Calculate target position relative to camera
-            targetPosition = cam.transform.TransformPoint(cameraOffset);
+            // Calculate desired world position relative to camera
+            Vector3 desiredWorldPos = cam.transform.TransformPoint(cameraOffset);
 
-            // Smooth follow
-            transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * followSpeed);
+            // Convert to local space so the parent canvas scale (0.001) is respected
+            if (transform.parent != null)
+            {
+                Vector3 desiredLocalPos = transform.parent.InverseTransformPoint(desiredWorldPos);
+                Vector3 currentLocalPos = transform.localPosition;
+                transform.localPosition = Vector3.Lerp(currentLocalPos, desiredLocalPos, Time.deltaTime * followSpeed);
+            }
+            else
+            {
+                transform.position = Vector3.Lerp(transform.position, desiredWorldPos, Time.deltaTime * followSpeed);
+            }
 
-            // Face the camera
-            Vector3 lookDir = cam.transform.position - transform.position;
+            // Face the camera (use world positions for direction calculation)
+            Vector3 worldPos = transform.position;
+            Vector3 lookDir = cam.transform.position - worldPos;
             lookDir.y = 0f;
             if (lookDir.sqrMagnitude > 0.001f)
             {
+                // Negate direction because UI Canvas front face is -Z
                 transform.rotation = Quaternion.Slerp(
                     transform.rotation,
-                    Quaternion.LookRotation(-lookDir), // Invert LookDir for UI Canvas
+                    Quaternion.LookRotation(-lookDir),
                     Time.deltaTime * followSpeed
                 );
             }
@@ -192,11 +205,29 @@ namespace Nibrask.UI
 
             targetAlpha = 1f;
 
-            // Position initially
+            if (canvasGroup != null)
+            {
+                canvasGroup.interactable = true;
+                canvasGroup.blocksRaycasts = true;
+            }
+
+            // Snap position and rotation immediately so the panel doesn't appear off-screen
             var cam = Camera.main;
             if (cam != null)
             {
-                transform.position = cam.transform.TransformPoint(cameraOffset);
+                Vector3 desiredWorldPos = cam.transform.TransformPoint(cameraOffset);
+
+                // Convert to local space to account for parent canvas scale (0.001)
+                if (transform.parent != null)
+                    transform.localPosition = transform.parent.InverseTransformPoint(desiredWorldPos);
+                else
+                    transform.position = desiredWorldPos;
+
+                // Snap rotation immediately — face camera from the start
+                Vector3 lookDir = cam.transform.position - transform.position;
+                lookDir.y = 0f;
+                if (lookDir.sqrMagnitude > 0.001f)
+                    transform.rotation = Quaternion.LookRotation(-lookDir);
             }
         }
 

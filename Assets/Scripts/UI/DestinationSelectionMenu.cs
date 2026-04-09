@@ -196,6 +196,7 @@ namespace Nibrask.UI
 
         /// <summary>
         /// Positions the menu in front of the AR camera.
+        /// Uses InverseTransformPoint to correctly handle the parent canvas scale (0.001).
         /// </summary>
         private void PositionInFrontOfCamera()
         {
@@ -206,8 +207,16 @@ namespace Nibrask.UI
             forward.y = 0f;
             forward.Normalize();
 
-            transform.position = cam.transform.position + forward * distanceFromCamera + Vector3.up * heightOffset;
-            transform.rotation = Quaternion.LookRotation(forward);
+            Vector3 desiredWorldPos = cam.transform.position + forward * distanceFromCamera + Vector3.up * heightOffset;
+
+            // Convert to local space to account for parent canvas scale (0.001)
+            if (transform.parent != null)
+                transform.localPosition = transform.parent.InverseTransformPoint(desiredWorldPos);
+            else
+                transform.position = desiredWorldPos;
+
+            // Negate forward because UI Canvas front face is -Z
+            transform.rotation = Quaternion.LookRotation(-forward);
         }
 
         /// <summary>
