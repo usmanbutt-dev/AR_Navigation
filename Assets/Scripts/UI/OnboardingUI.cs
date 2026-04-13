@@ -243,7 +243,7 @@ namespace Nibrask.UI
             floorFound = true;
 
             if (scanningStatusText != null)
-                scanningStatusText.text = "Floor detected! ✓\nTap the floor to set your position.";
+                scanningStatusText.text = "Floor detected!\nTap the floor to set your position.";
 
             if (scanningProgressFill != null)
                 scanningProgressFill.fillAmount = 1f;

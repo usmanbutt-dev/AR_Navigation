@@ -166,11 +166,11 @@ namespace Nibrask.UI
                 {
                     string flightInfo = "";
                     if (!string.IsNullOrEmpty(destination.flightNumber))
-                        flightInfo += $"✈️ {destination.flightNumber}";
+                        flightInfo += destination.flightNumber;
                     if (!string.IsNullOrEmpty(destination.boardingTime))
-                        flightInfo += $"\n🕐 Boarding: {destination.boardingTime}";
+                        flightInfo += $"\nBoarding: {destination.boardingTime}";
                     if (!string.IsNullOrEmpty(destination.airlineName))
-                        flightInfo += $"\n🏷️ {destination.airlineName}";
+                        flightInfo += $"\n{destination.airlineName}";
 
                     flightInfoText.text = flightInfo;
                     flightInfoText.gameObject.SetActive(true);

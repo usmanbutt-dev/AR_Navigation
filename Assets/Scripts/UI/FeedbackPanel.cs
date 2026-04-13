@@ -227,7 +227,7 @@ namespace Nibrask.UI
                 totalCheckpoints = navigationManager.CurrentPath.Count;
 
             UpdateProgressBar();
-            ShowToast("🧭 Navigation started", successColor, 2f);
+            ShowToast("Navigation started", successColor, 2f);
 
             if (offRouteWarning != null)
                 offRouteWarning.SetActive(false);
@@ -237,12 +237,12 @@ namespace Nibrask.UI
         {
             passedCheckpoints = index + 1;
             UpdateProgressBar();
-            ShowToast($"✓ Checkpoint {passedCheckpoints}/{totalCheckpoints}", successColor, 1.5f);
+            ShowToast($"Checkpoint {passedCheckpoints}/{totalCheckpoints}", successColor, 1.5f);
         }
 
         private void HandleOffRoute()
         {
-            ShowToast("⚠️ You are off route!", warningColor);
+            ShowToast("You are off route!", warningColor);
 
             if (offRouteWarning != null)
             {
@@ -254,7 +254,7 @@ namespace Nibrask.UI
 
         private void HandleBackOnRoute()
         {
-            ShowToast("✓ Back on route", successColor, 2f);
+            ShowToast("Back on route", successColor, 2f);
 
             if (offRouteWarning != null)
                 offRouteWarning.SetActive(false);
@@ -262,7 +262,7 @@ namespace Nibrask.UI
 
         private void HandleRouteRecalculated()
         {
-            ShowToast("🔄 Route recalculated", infoColor, 2f);
+            ShowToast("Route recalculated", infoColor, 2f);
 
             if (offRouteWarning != null)
                 offRouteWarning.SetActive(false);
@@ -272,7 +272,7 @@ namespace Nibrask.UI
         {
             // Fix #11: Clear the off-route warning when recalculation fails so the UI doesn't
             // get permanently stuck showing the warning banner with no follow-up feedback.
-            ShowToast("⚠️ Could not find a path. Try moving closer to the route.", warningColor, 4f);
+            ShowToast("Could not find a path. Try moving closer to the route.", warningColor, 4f);
 
             if (offRouteWarning != null)
             {
@@ -283,7 +283,7 @@ namespace Nibrask.UI
 
         private void HandleArrived(Data.DestinationData destination)
         {
-            ShowToast("🎉 You have arrived!", successColor, 4f);
+            ShowToast("You have arrived!", successColor, 4f);
 
             if (offRouteWarning != null)
                 offRouteWarning.SetActive(false);

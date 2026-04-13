@@ -69,14 +69,14 @@ namespace Nibrask.Data
         {
             return destinationType switch
             {
-                DestinationType.Gate => "🛫 Gate",
-                DestinationType.Restroom => "🚻 Restroom",
-                DestinationType.Restaurant => "🍽️ Restaurant",
-                DestinationType.SecurityCheckpoint => "🔒 Security",
-                DestinationType.Exit => "🚪 Exit",
-                DestinationType.Information => "ℹ️ Info",
-                DestinationType.Lounge => "🛋️ Lounge",
-                _ => "📍 Location"
+                DestinationType.Gate => "Gate",
+                DestinationType.Restroom => "Restroom",
+                DestinationType.Restaurant => "Restaurant",
+                DestinationType.SecurityCheckpoint => "Security",
+                DestinationType.Exit => "Exit",
+                DestinationType.Information => "Info",
+                DestinationType.Lounge => "Lounge",
+                _ => "Location"
             };
         }
     }
