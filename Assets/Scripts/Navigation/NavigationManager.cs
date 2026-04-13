@@ -28,7 +28,7 @@ namespace Nibrask.Navigation
         [Header("Settings")]
         [SerializeField]
         [Tooltip("Cooldown between route recalculations (seconds)")]
-        private float recalculationCooldown = 3.0f;
+        private float recalculationCooldown = 1.5f;
 
         [Header("Debug")]
         [SerializeField]

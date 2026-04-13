@@ -80,6 +80,12 @@ namespace Nibrask.Navigation
         private bool wasOffRoute = false;
         private bool hasArrived = false;
         private DestinationData trackedDestination;
+        private float floorY = 0f; // Y of the terminal floor, derived from first waypoint
+
+        [Header("References")]
+        [SerializeField]
+        [Tooltip("PathRenderer to trim as checkpoints are passed")]
+        private PathRenderer pathRenderer;
 
         private void Start()
         {
@@ -124,7 +130,11 @@ namespace Nibrask.Navigation
             isTracking = true;
             nextUpdateTime = 0f;
 
-            Debug.Log($"[DistanceTracker] Tracking started with {path.Count} waypoints.");
+            // Record floor Y from the first waypoint so all distance checks
+            // are done in XZ space (ignoring camera eye height).
+            floorY = path.Count > 0 ? path[0].WorldPosition.y : 0f;
+
+            Debug.Log($"[DistanceTracker] Tracking started with {path.Count} waypoints. Floor Y = {floorY:F2}");
         }
 
         /// <summary>
@@ -165,7 +175,11 @@ namespace Nibrask.Navigation
         {
             if (userTransform == null) return;
 
-            Vector3 userPos = userTransform.position;
+            // Flatten the user's Y to the floor plane so that eye-height (~1.6m)
+            // does not artificially inflate distance-to-path calculations and
+            // trigger false off-route or premature arrival events.
+            Vector3 rawPos = userTransform.position;
+            Vector3 userPos = new Vector3(rawPos.x, floorY, rawPos.z);
 
             // 1. Check if current checkpoint has been reached
             CheckCheckpoints(userPos);
@@ -234,6 +248,10 @@ namespace Nibrask.Navigation
                 Debug.Log($"[DistanceTracker] Checkpoint {currentCheckpointIndex} reached (node {checkpoint.nodeId})");
                 AppEvents.RaiseCheckpointReached(currentCheckpointIndex);
                 currentCheckpointIndex++;
+
+                // Trim the rendered path so the line shrinks behind the user
+                if (pathRenderer != null)
+                    pathRenderer.TrimPathToCheckpoint(currentCheckpointIndex, currentPath);
             }
         }
 

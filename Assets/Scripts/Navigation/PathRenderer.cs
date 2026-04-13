@@ -44,6 +44,7 @@ namespace Nibrask.Navigation
         private LineRenderer lineRenderer;
         private List<Vector3> pathPoints = new List<Vector3>();
         private bool isActive = false;
+        private float floorY = 0f; // Y level of the terminal anchor (set when path is rendered)
 
         private void Awake()
         {
@@ -110,11 +111,17 @@ namespace Nibrask.Navigation
 
             pathPoints.Clear();
 
+            // Record the floor Y level from the first waypoint so the
+            // user's start position can be projected to the same height.
+            floorY = path[0].WorldPosition.y;
+
             // Generate smooth points along the path
             for (int i = 0; i < path.Count - 1; i++)
             {
-                Vector3 start = path[i].WorldPosition + Vector3.up * heightOffset;
-                Vector3 end = path[i + 1].WorldPosition + Vector3.up * heightOffset;
+                // Force Y to floor level + small height offset — waypoints should
+                // already be at floor level, but this ensures consistency.
+                Vector3 start = new Vector3(path[i].WorldPosition.x, floorY + heightOffset, path[i].WorldPosition.z);
+                Vector3 end   = new Vector3(path[i + 1].WorldPosition.x, floorY + heightOffset, path[i + 1].WorldPosition.z);
 
                 // Add interpolated points for smoother curves
                 for (int step = 0; step < interpolationSteps; step++)
@@ -125,7 +132,10 @@ namespace Nibrask.Navigation
             }
 
             // Add the final point
-            pathPoints.Add(path[path.Count - 1].WorldPosition + Vector3.up * heightOffset);
+            pathPoints.Add(new Vector3(
+                path[path.Count - 1].WorldPosition.x,
+                floorY + heightOffset,
+                path[path.Count - 1].WorldPosition.z));
 
             // Apply to LineRenderer
             lineRenderer.positionCount = pathPoints.Count;
@@ -137,13 +147,17 @@ namespace Nibrask.Navigation
         }
 
         /// <summary>
-        /// Updates the start of the path to follow the user's position.
+        /// Updates the start of the path to follow the user's position,
+        /// projecting the camera XZ onto the floor plane so the line
+        /// never floats at eye level.
         /// </summary>
-        public void UpdateStartPosition(Vector3 userPosition)
+        public void UpdateStartPosition(Vector3 cameraWorldPosition)
         {
             if (!isActive || pathPoints.Count == 0) return;
 
-            pathPoints[0] = userPosition + Vector3.up * heightOffset;
+            // Project the camera's XZ onto the floor Y level so the path
+            // stays on the ground rather than starting at head height.
+            pathPoints[0] = new Vector3(cameraWorldPosition.x, floorY + heightOffset, cameraWorldPosition.z);
             lineRenderer.SetPosition(0, pathPoints[0]);
         }
 
