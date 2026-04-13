@@ -131,6 +131,8 @@ namespace Nibrask.Navigation
 
         /// <summary>
         /// Finds the closest waypoint node to a given world position.
+        /// Uses XZ-only (horizontal) distance to avoid Y-axis bias from
+        /// camera height vs floor-level waypoints.
         /// </summary>
         public WaypointNode FindNearestNode(Vector3 worldPosition)
         {
@@ -139,7 +141,11 @@ namespace Nibrask.Navigation
 
             foreach (var kvp in nodes)
             {
-                float dist = kvp.Value.DistanceTo(worldPosition);
+                // XZ-only distance so height differences don't bias the result
+                Vector3 nodePos = kvp.Value.WorldPosition;
+                float dx = nodePos.x - worldPosition.x;
+                float dz = nodePos.z - worldPosition.z;
+                float dist = dx * dx + dz * dz; // squared is fine for comparison
                 if (dist < nearestDist)
                 {
                     nearestDist = dist;

@@ -118,6 +118,10 @@ namespace Nibrask.UI
 
         private void Update()
         {
+            // Skip all work when we're fully hidden (Bug Fix G: avoid per-frame waste)
+            if (activeCanvasGroup != null && activeCanvasGroup.alpha <= 0f && targetAlpha <= 0f)
+                return;
+
             // Animate canvas alpha (use cached reference that includes GetComponent fallback)
             if (activeCanvasGroup != null)
             {

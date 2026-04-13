@@ -142,13 +142,16 @@ namespace Nibrask.UI
                     services.Add(dest);
             }
 
-            // Add gate category label
+            // Add gate category label — force it to the correct position in the layout
             if (categoryLabelGates != null)
             {
-                // Always set explicitly so stale labels from a previous Show() are cleared (Fix #12)
                 categoryLabelGates.gameObject.SetActive(gates.Count > 0);
                 if (gates.Count > 0)
+                {
                     categoryLabelGates.text = $"Gates ({gates.Count})";
+                    // Ensure the label appears before the gate buttons we're about to create
+                    categoryLabelGates.transform.SetAsLastSibling();
+                }
             }
 
             foreach (var gate in gates)
@@ -156,13 +159,16 @@ namespace Nibrask.UI
                 CreateDestinationButton(gate);
             }
 
-            // Add services category label
+            // Add services category label — force it after all gate buttons
             if (categoryLabelServices != null)
             {
-                // Always set explicitly so stale labels from a previous Show() are cleared (Fix #12)
                 categoryLabelServices.gameObject.SetActive(services.Count > 0);
                 if (services.Count > 0)
+                {
                     categoryLabelServices.text = $"Services ({services.Count})";
+                    // Ensure the label appears after gates and before service buttons
+                    categoryLabelServices.transform.SetAsLastSibling();
+                }
             }
 
             foreach (var service in services)

@@ -70,7 +70,10 @@ namespace Nibrask.UI
             AppEvents.OnArrived += HandleArrived;
 
             if (navigateAgainButton != null)
+            {
+                navigateAgainButton.onClick.RemoveListener(OnNavigateAgainClicked);
                 navigateAgainButton.onClick.AddListener(OnNavigateAgainClicked);
+            }
         }
 
         private void OnDisable()

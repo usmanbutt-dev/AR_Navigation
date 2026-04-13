@@ -81,13 +81,24 @@ namespace Nibrask.Core
             DontDestroyOnLoad(transform.root.gameObject);
         }
 
+        private bool isQuitting = false;
+
+        private void OnApplicationQuit()
+        {
+            isQuitting = true;
+        }
+
         private void OnDestroy()
         {
-            // Clear all static event subscriptions to prevent leaks across scene reloads.
-            // This is important because AppEvents uses static events which persist between sessions.
+            // Only clear static events when the app is truly shutting down.
+            // During scene reloads, new objects may have already subscribed in
+            // their OnEnable — calling ClearAll here would wipe those new
+            // subscriptions. DontDestroyOnLoad keeps AppStateManager alive
+            // across scenes anyway, so this only triggers on actual quit.
             if (Instance == this)
             {
-                AppEvents.ClearAll();
+                if (isQuitting)
+                    AppEvents.ClearAll();
                 Instance = null;
             }
         }
