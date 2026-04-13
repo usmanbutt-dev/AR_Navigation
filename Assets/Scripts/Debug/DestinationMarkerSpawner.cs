@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using Nibrask.Core;
@@ -6,23 +7,51 @@ using Nibrask.Data;
 namespace Nibrask.DebugUtils
 {
     /// <summary>
-    /// Debug helper that spawns a unique colored primitive at each destination's
-    /// world position so you can visually identify locations in your room.
-    /// Attach to any GameObject in the scene.
+    /// Spawns a prefab (or colored primitive fallback) at each destination's
+    /// world-space position when the terminal anchor is placed.
+    /// Assign prefabs per destination type in the Inspector — leave a slot
+    /// empty to use the colored-primitive fallback for that type.
     /// </summary>
     public class DestinationMarkerSpawner : MonoBehaviour
     {
-        [Header("Settings")]
+        // ── Per-type prefabs ──────────────────────────────────────────────
+        [System.Serializable]
+        public class TypePrefabEntry
+        {
+            [Tooltip("Destination type this prefab represents")]
+            public DestinationType destinationType;
+
+            [Tooltip("Prefab to instantiate. Leave empty to use the colored-primitive fallback.")]
+            public GameObject prefab;
+        }
+
+        [Header("Prefabs — assign one per destination type")]
+        [Tooltip("Map destination types to prefabs. Any unassigned type falls back to a colored primitive.")]
         [SerializeField]
-        [Tooltip("Scale of each marker primitive")]
-        private float markerScale = 0.15f;
+        private List<TypePrefabEntry> typePrefabs = new List<TypePrefabEntry>();
+
+        [Header("Fallback primitive settings (used when no prefab is assigned)")]
+        [SerializeField]
+        [Tooltip("Scale of the fallback primitive marker")]
+        private float fallbackMarkerScale = 0.15f;
+
+        [Header("Label settings")]
+        [SerializeField]
+        [Tooltip("Show a floating text label above each marker")]
+        private bool showLabels = true;
 
         [SerializeField]
-        [Tooltip("Height offset above the floor")]
+        [Tooltip("Height above the marker to place the label")]
+        private float labelHeightOffset = 0.25f;
+
+        [Header("General")]
+        [SerializeField]
+        [Tooltip("Height offset above the floor anchor")]
         private float heightOffset = 0.1f;
 
-        private Transform terminalOrigin;
+        // Internal
         private bool hasSpawned = false;
+        private readonly List<GameObject> spawnedMarkers = new List<GameObject>();
 
         private void OnEnable()
         {
@@ -38,75 +67,119 @@ namespace Nibrask.DebugUtils
         {
             if (hasSpawned) return;
             hasSpawned = true;
-            terminalOrigin = anchor;
 
             var mapData = AppStateManager.Instance?.TerminalMap;
             if (mapData == null)
             {
-                UnityEngine.Debug.LogWarning("[DestinationMarkerSpawner] No TerminalMapData found.");
+                Debug.LogWarning("[DestinationMarkerSpawner] No TerminalMapData found on AppStateManager.");
                 return;
             }
 
             foreach (var destination in mapData.destinations)
             {
-                SpawnMarker(destination, mapData);
+                SpawnMarker(destination, mapData, anchor);
             }
 
-            UnityEngine.Debug.Log($"[DestinationMarkerSpawner] Spawned {mapData.destinations.Count} destination markers.");
+            Debug.Log($"[DestinationMarkerSpawner] Spawned {mapData.destinations.Count} destination markers.");
         }
 
-        private void SpawnMarker(DestinationData dest, TerminalMapData mapData)
+        private void SpawnMarker(DestinationData dest, TerminalMapData mapData, Transform anchor)
         {
-            // Get world position
-            Vector3 worldPos = mapData.GetDestinationWorldPosition(dest, terminalOrigin);
+            Vector3 worldPos = mapData.GetDestinationWorldPosition(dest, anchor);
             worldPos.y += heightOffset;
 
-            // Pick primitive type and color based on destination name
+            GameObject marker = null;
+
+            // Try to find a prefab for this destination type
+            GameObject prefab = GetPrefabForType(dest.destinationType);
+
+            if (prefab != null)
+            {
+                // Instantiate the assigned prefab
+                marker = Instantiate(prefab, worldPos, Quaternion.identity, transform);
+                marker.name = $"Marker_{dest.destinationName}";
+            }
+            else
+            {
+                // No prefab assigned — fall back to a colored primitive
+                marker = SpawnFallbackPrimitive(dest, worldPos);
+            }
+
+            if (marker == null) return;
+            spawnedMarkers.Add(marker);
+
+            // Add floating label if enabled
+            if (showLabels)
+            {
+                SpawnLabel(dest.destinationName, worldPos + Vector3.up * labelHeightOffset, marker.transform);
+            }
+        }
+
+        /// <summary>
+        /// Returns the prefab assigned to the given destination type, or null if none.
+        /// </summary>
+        private GameObject GetPrefabForType(DestinationType type)
+        {
+            foreach (var entry in typePrefabs)
+            {
+                if (entry.destinationType == type && entry.prefab != null)
+                    return entry.prefab;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Creates a simple colored primitive as a fallback when no prefab is assigned.
+        /// Each destination type gets a unique shape and color.
+        /// </summary>
+        private GameObject SpawnFallbackPrimitive(DestinationData dest, Vector3 worldPos)
+        {
             PrimitiveType primType;
             Color color;
-            GetMarkerStyle(dest, out primType, out color);
+            GetFallbackStyle(dest, out primType, out color);
 
-            // Create the primitive
-            GameObject marker = GameObject.CreatePrimitive(primType);
+            var marker = GameObject.CreatePrimitive(primType);
             marker.name = $"Marker_{dest.destinationName}";
             marker.transform.position = worldPos;
-            marker.transform.localScale = Vector3.one * markerScale;
+            marker.transform.localScale = Vector3.one * fallbackMarkerScale;
+            marker.transform.SetParent(transform);
 
-            // Remove collider (not needed, avoids physics interference)
+            // Remove collider
             var col = marker.GetComponent<Collider>();
             if (col != null) Destroy(col);
 
-            // Set color
-            var renderer = marker.GetComponent<Renderer>();
-            if (renderer != null)
+            // Apply color with emission
+            var rend = marker.GetComponent<Renderer>();
+            if (rend != null)
             {
                 var mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                if (mat == null) mat = new Material(Shader.Find("Standard"));
                 mat.color = color;
-                // Make it emissive so it's visible in AR
                 mat.EnableKeyword("_EMISSION");
                 mat.SetColor("_EmissionColor", color * 1.5f);
-                renderer.material = mat;
+                rend.material = mat;
             }
 
-            // Add a floating text label above the marker
-            SpawnLabel(dest.destinationName, worldPos + Vector3.up * (markerScale + 0.05f));
+            return marker;
         }
 
-        private void SpawnLabel(string text, Vector3 position)
+        /// <summary>
+        /// Spawns a world-space text label above a marker.
+        /// </summary>
+        private void SpawnLabel(string text, Vector3 position, Transform parent)
         {
-            // Create a world-space canvas for the label
-            GameObject labelGo = new GameObject($"Label_{text}");
+            var labelGo = new GameObject($"Label_{text}");
             labelGo.transform.position = position;
+            labelGo.transform.SetParent(parent, worldPositionStays: true);
 
             var canvas = labelGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
+            labelGo.transform.localScale = Vector3.one * 0.005f;
 
             var rectTransform = labelGo.GetComponent<RectTransform>();
             rectTransform.sizeDelta = new Vector2(0.5f, 0.1f);
-            labelGo.transform.localScale = Vector3.one * 0.005f;
 
-            // Add TMP text
-            GameObject textGo = new GameObject("Text");
+            var textGo = new GameObject("Text");
             textGo.transform.SetParent(labelGo.transform, false);
 
             var tmp = textGo.AddComponent<TextMeshProUGUI>();
@@ -121,46 +194,43 @@ namespace Nibrask.DebugUtils
             textRect.offsetMin = Vector2.zero;
             textRect.offsetMax = Vector2.zero;
 
-            // Add billboard behavior so it faces the camera
+            // Billboard so the label faces the camera
             labelGo.AddComponent<Nibrask.UI.Billboard>();
         }
 
-        private void GetMarkerStyle(DestinationData dest, out PrimitiveType primType, out Color color)
+        /// <summary>
+        /// Returns a fallback primitive type and color based on the destination.
+        /// Called only when no prefab is assigned for that type.
+        /// </summary>
+        private void GetFallbackStyle(DestinationData dest, out PrimitiveType primType, out Color color)
         {
-            // Each destination gets a unique primitive + color combo
-            switch (dest.destinationName)
+            switch (dest.destinationType)
             {
-                case "Gate A12":
+                case DestinationType.Gate:
                     primType = PrimitiveType.Cube;
-                    color = Color.green;
+                    // Different shades of blue/green for each gate based on name hash
+                    float h = (float)(Mathf.Abs(dest.destinationName.GetHashCode()) % 100) / 100f;
+                    color = Color.HSVToRGB(h * 0.3f + 0.4f, 0.9f, 1f); // green-cyan range
                     break;
-                case "Gate A14":
-                    primType = PrimitiveType.Cube;
-                    color = Color.blue;
-                    break;
-                case "Gate B3":
-                    primType = PrimitiveType.Cube;
-                    color = Color.yellow;
-                    break;
-                case "Gate B7":
-                    primType = PrimitiveType.Cube;
-                    color = Color.magenta;
-                    break;
-                case "Main Exit":
-                    primType = PrimitiveType.Cylinder;
-                    color = Color.red;
-                    break;
-                case "Sky Lounge Caf\u00e9":
-                    primType = PrimitiveType.Sphere;
-                    color = new Color(1f, 0.5f, 0f); // Orange
-                    break;
-                case "Restroom A":
+                case DestinationType.Restroom:
                     primType = PrimitiveType.Sphere;
                     color = Color.cyan;
                     break;
-                case "Security Checkpoint":
+                case DestinationType.Restaurant:
+                    primType = PrimitiveType.Sphere;
+                    color = new Color(1f, 0.5f, 0f); // Orange
+                    break;
+                case DestinationType.SecurityCheckpoint:
                     primType = PrimitiveType.Capsule;
-                    color = new Color(1f, 1f, 0.5f); // Light yellow
+                    color = new Color(1f, 1f, 0.3f); // Yellow
+                    break;
+                case DestinationType.Exit:
+                    primType = PrimitiveType.Cylinder;
+                    color = Color.red;
+                    break;
+                case DestinationType.Lounge:
+                    primType = PrimitiveType.Sphere;
+                    color = new Color(0.6f, 0.2f, 1f); // Purple
                     break;
                 default:
                     primType = PrimitiveType.Sphere;
@@ -168,5 +238,19 @@ namespace Nibrask.DebugUtils
                     break;
             }
         }
+
+        /// <summary>
+        /// Destroys all spawned markers (useful if you want to re-spawn after map reload).
+        /// </summary>
+        public void ClearMarkers()
+        {
+            foreach (var marker in spawnedMarkers)
+            {
+                if (marker != null) Destroy(marker);
+            }
+            spawnedMarkers.Clear();
+            hasSpawned = false;
+        }
     }
 }
+
