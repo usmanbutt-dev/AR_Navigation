@@ -116,6 +116,12 @@ namespace Nibrask.UI
                 AppStateManager.Instance.OnStateChanged -= HandleStateChanged;
                 AppStateManager.Instance.OnStateChanged += HandleStateChanged;
             }
+
+            if (navigationManager == null)
+            {
+                Debug.LogWarning("[FeedbackPanel] navigationManager is not assigned in the Inspector. " +
+                    "Progress bar and checkpoint counts will not work correctly.");
+            }
         }
 
         /// <summary>

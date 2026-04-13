@@ -45,6 +45,7 @@ namespace Nibrask.Navigation
         private List<Vector3> pathPoints = new List<Vector3>();
         private bool isActive = false;
         private float floorY = 0f; // Y level of the terminal anchor (set when path is rendered)
+        private Material runtimeMaterial; // Runtime copy so we don't modify the shared asset
 
         private void Awake()
         {
@@ -54,11 +55,11 @@ namespace Nibrask.Navigation
 
         private void Update()
         {
-            if (!isActive || pathMaterial == null) return;
+            if (!isActive || runtimeMaterial == null) return;
 
             // Animate the UV offset for directional flow effect
             float offset = Time.time * scrollSpeed;
-            pathMaterial.SetTextureOffset("_BaseMap", new Vector2(-offset, 0f));
+            runtimeMaterial.SetTextureOffset("_BaseMap", new Vector2(-offset, 0f));
         }
 
         /// <summary>
@@ -78,7 +79,9 @@ namespace Nibrask.Navigation
 
             if (pathMaterial != null)
             {
-                lineRenderer.material = pathMaterial;
+                // Create a runtime copy so UV animation doesn't corrupt the asset on disk
+                runtimeMaterial = new Material(pathMaterial);
+                lineRenderer.material = runtimeMaterial;
             }
 
             // Set gradient: green near → blue far

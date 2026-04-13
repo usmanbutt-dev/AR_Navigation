@@ -15,6 +15,7 @@ namespace Nibrask.DebugUtils
         private void OnGUI()
         {
             if (!showDebugUI) return;
+            if (AppStateManager.Instance == null) return;
 
             // Make the buttons large enough to press on a phone screen
             GUI.skin.button.fontSize = Screen.width / 30;
