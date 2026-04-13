@@ -3,7 +3,7 @@ using TMPro;
 using Nibrask.Core;
 using Nibrask.Data;
 
-namespace Nibrask.Debug
+namespace Nibrask.DebugUtils
 {
     /// <summary>
     /// Debug helper that spawns a unique colored primitive at each destination's
