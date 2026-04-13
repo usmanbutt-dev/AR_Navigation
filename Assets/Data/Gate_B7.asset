@@ -15,7 +15,7 @@ MonoBehaviour:
   destinationName: Gate B7
   destinationType: 0
   icon: {fileID: 0}
-  relativePosition: {x: 20, y: 0, z: 15}
+  relativePosition: {x: 4, y: 0, z: 3}
   nearestWaypointIndex: 12
   flightNumber: BA-117
   boardingTime: 17:45

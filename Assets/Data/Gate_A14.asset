@@ -15,7 +15,7 @@ MonoBehaviour:
   destinationName: Gate A14
   destinationType: 0
   icon: {fileID: 0}
-  relativePosition: {x: 20, y: 0, z: 0}
+  relativePosition: {x: 4, y: 0, z: 0}
   nearestWaypointIndex: 7
   flightNumber: EK-203
   boardingTime: 15:00
