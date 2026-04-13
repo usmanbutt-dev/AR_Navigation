@@ -150,8 +150,10 @@ namespace Nibrask.Navigation
                 }
             }
 
-            // Find the nearest waypoint to the user
-            WaypointNode startNode = waypointGraph.FindNearestNode(userTransform.position);
+            // Project camera position to floor so eye-height doesn't
+            // bias the nearest-node search (Bug Fix #1)
+            Vector3 flatUserPos = new Vector3(userTransform.position.x, 0f, userTransform.position.z);
+            WaypointNode startNode = waypointGraph.FindNearestNode(flatUserPos);
             if (startNode == null)
             {
                 Debug.LogError("[NavigationManager] Could not find start node near user.");
@@ -214,7 +216,9 @@ namespace Nibrask.Navigation
             if (CurrentDestination == null || waypointGraph == null || userTransform == null)
                 return;
 
-            WaypointNode startNode = waypointGraph.FindNearestNode(userTransform.position);
+            // Project to floor Y to avoid eye-height bias (Bug Fix #2)
+            Vector3 flatPos = new Vector3(userTransform.position.x, 0f, userTransform.position.z);
+            WaypointNode startNode = waypointGraph.FindNearestNode(flatPos);
             WaypointNode endNode = waypointGraph.GetNodeForDestination(CurrentDestination);
 
             if (startNode == null || endNode == null) return;

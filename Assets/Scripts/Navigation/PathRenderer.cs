@@ -168,8 +168,16 @@ namespace Nibrask.Navigation
         {
             if (checkpointIndex <= 0 || checkpointIndex >= fullPath.Count) return;
 
-            // Re-render from the current checkpoint onwards
             var remainingPath = fullPath.GetRange(checkpointIndex, fullPath.Count - checkpointIndex);
+
+            // Bug Fix #4: RenderPath needs at least 2 nodes to draw a line.
+            // If only the final destination remains, keep the last two nodes
+            // so the line doesn't vanish before arrival fires.
+            if (remainingPath.Count < 2 && fullPath.Count >= 2)
+            {
+                remainingPath = fullPath.GetRange(fullPath.Count - 2, 2);
+            }
+
             RenderPath(remainingPath);
         }
 

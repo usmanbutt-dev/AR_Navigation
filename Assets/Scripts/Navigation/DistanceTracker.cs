@@ -82,7 +82,7 @@ namespace Nibrask.Navigation
         private DestinationData trackedDestination;
         private float floorY = 0f; // Y of the terminal floor, derived from first waypoint
 
-        [Header("References")]
+        [Header("Path Trimming")]
         [SerializeField]
         [Tooltip("PathRenderer to trim as checkpoints are passed")]
         private PathRenderer pathRenderer;
@@ -260,6 +260,16 @@ namespace Nibrask.Navigation
         /// </summary>
         private float CalculateDistanceToPath(Vector3 userPos)
         {
+            // Bug Fix #8: if checkpoint index has advanced past all segments,
+            // return 0 so off-route doesn't fire falsely on arrival.
+            if (currentCheckpointIndex >= currentPath.Count - 1)
+            {
+                // Only the final waypoint remains — check distance to it directly
+                if (currentCheckpointIndex < currentPath.Count)
+                    return Vector3.Distance(userPos, currentPath[currentCheckpointIndex].WorldPosition);
+                return 0f; // Already past all waypoints — don't trigger off-route
+            }
+
             float minDist = float.MaxValue;
 
             for (int i = currentCheckpointIndex; i < currentPath.Count - 1; i++)

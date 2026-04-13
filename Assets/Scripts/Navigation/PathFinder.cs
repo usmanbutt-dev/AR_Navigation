@@ -37,7 +37,10 @@ namespace Nibrask.Navigation
 
             if (start == end)
             {
-                return new List<WaypointNode> { start };
+                // Bug Fix #7: returning a 1-node path causes RenderPath to clear itself
+                // (needs >= 2 nodes to draw). Return the node twice so the path renders
+                // as a zero-length segment; arrival fires on the next DistanceTracker tick.
+                return new List<WaypointNode> { start, start };
             }
 
             var openSet = new List<AStarNode>();

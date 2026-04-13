@@ -158,12 +158,13 @@ namespace Nibrask.Navigation
             if (nodes.TryGetValue(destination.nearestWaypointIndex, out var node))
                 return node;
 
-            // Fallback: find the nearest node to the destination's relative position
+            // Fallback: search by destination's world position relative to this graph's transform.
+            // The WaypointGraph parent IS the terminal anchor transform set in BuildGraph,
+            // so we use transform.TransformPoint (not transform.parent which could be anything).
+            // Bug Fix #3: was incorrectly using transform.parent.TransformPoint.
             Debug.LogWarning($"[WaypointGraph] No node found for destination '{destination.destinationName}', using nearest.");
-
-            return FindNearestNode(transform.parent != null
-                ? transform.parent.TransformPoint(destination.relativePosition)
-                : destination.relativePosition);
+            Vector3 approxWorldPos = transform.TransformPoint(destination.relativePosition);
+            return FindNearestNode(approxWorldPos);
         }
 
         /// <summary>
