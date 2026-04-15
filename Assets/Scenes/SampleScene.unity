@@ -2496,7 +2496,7 @@ MonoBehaviour:
   fallbackMarkerScale: 0.15
   showLabels: 1
   labelHeightOffset: 0.25
-  heightOffset: 0.1
+  heightOffset: 1
 --- !u!224 &637151525 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5551017266776680517, guid: 02644bbd28622410a84cf154fc436b8a, type: 3}
@@ -3850,7 +3850,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &901232578
 MonoBehaviour:
   m_ObjectHideFlags: 0

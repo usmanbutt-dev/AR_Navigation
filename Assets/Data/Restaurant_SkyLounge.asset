@@ -15,7 +15,7 @@ MonoBehaviour:
   destinationName: "Sky Lounge Caf\xE9"
   destinationType: 2
   icon: {fileID: 0}
-  relativePosition: {x: 4, y: 0, z: 2.5}
+  relativePosition: {x: 8, y: 0, z: 5}
   nearestWaypointIndex: 8
   flightNumber: 
   boardingTime: 

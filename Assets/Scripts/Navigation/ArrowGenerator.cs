@@ -19,7 +19,7 @@ namespace Nibrask.Navigation
 
         [SerializeField]
         [Tooltip("Distance between arrows along the path (meters)")]
-        private float arrowSpacing = 0.75f;
+        private float arrowSpacing = 1.2f;
 
         [SerializeField]
         [Tooltip("Height offset above the floor (meters)")]
