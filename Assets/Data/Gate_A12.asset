@@ -15,7 +15,7 @@ MonoBehaviour:
   destinationName: Gate A12
   destinationType: 0
   icon: {fileID: 0}
-  relativePosition: {x: 2, y: 0, z: 0}
+  relativePosition: {x: 3.5, y: 0, z: 0}
   nearestWaypointIndex: 5
   flightNumber: SV-412
   boardingTime: 14:30

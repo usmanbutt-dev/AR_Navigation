@@ -24,12 +24,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 43e13df341233a240bab12c5f0aa8c7a, type: 2}
   waypoints:
   - nodeId: 0
-    relativePosition: {x: -1, y: 0, z: 0}
+    relativePosition: {x: -2, y: 0, z: -0.5}
     connectedNodeIds: 01000000
     isDestinationNode: 0
     debugLabel: Exit
   - nodeId: 1
-    relativePosition: {x: 0, y: 0, z: 0.6}
+    relativePosition: {x: 0, y: 0, z: 1}
     connectedNodeIds: 000000000200000003000000
     isDestinationNode: 0
     debugLabel: Security
@@ -39,52 +39,52 @@ MonoBehaviour:
     isDestinationNode: 0
     debugLabel: Entrance
   - nodeId: 3
-    relativePosition: {x: 1, y: 0, z: 1.4}
+    relativePosition: {x: 1.5, y: 0, z: 2.5}
     connectedNodeIds: 01000000020000000400000008000000
     isDestinationNode: 0
     debugLabel: Junction
   - nodeId: 4
-    relativePosition: {x: 1, y: 0, z: 0}
+    relativePosition: {x: 2, y: 0, z: 0}
     connectedNodeIds: 0300000005000000
     isDestinationNode: 0
     debugLabel: ConcA Start
   - nodeId: 5
-    relativePosition: {x: 2, y: 0, z: 0}
+    relativePosition: {x: 3.5, y: 0, z: 0}
     connectedNodeIds: 0400000006000000
     isDestinationNode: 1
     debugLabel: Gate A12
   - nodeId: 6
-    relativePosition: {x: 3, y: 0, z: 0}
+    relativePosition: {x: 5, y: 0, z: 0}
     connectedNodeIds: 0500000007000000
     isDestinationNode: 0
     debugLabel: ConcA Mid
   - nodeId: 7
-    relativePosition: {x: 4, y: 0, z: 0}
+    relativePosition: {x: 7, y: 0, z: 0}
     connectedNodeIds: 06000000
     isDestinationNode: 1
     debugLabel: Gate A14
   - nodeId: 8
-    relativePosition: {x: 3, y: 0, z: 1.4}
+    relativePosition: {x: 4, y: 0, z: 2.5}
     connectedNodeIds: 0300000009000000
     isDestinationNode: 0
     debugLabel: Restaurant
   - nodeId: 9
-    relativePosition: {x: 1, y: 0, z: 3}
+    relativePosition: {x: 2, y: 0, z: 5}
     connectedNodeIds: 080000000a000000
     isDestinationNode: 0
     debugLabel: ConcB Start
   - nodeId: 10
-    relativePosition: {x: 2, y: 0, z: 3}
+    relativePosition: {x: 3.5, y: 0, z: 5}
     connectedNodeIds: 090000000b000000
     isDestinationNode: 1
     debugLabel: Gate B3
   - nodeId: 11
-    relativePosition: {x: 3, y: 0, z: 3}
+    relativePosition: {x: 5, y: 0, z: 5}
     connectedNodeIds: 0a0000000c000000
     isDestinationNode: 0
     debugLabel: ConcB Mid
   - nodeId: 12
-    relativePosition: {x: 4, y: 0, z: 3}
+    relativePosition: {x: 7, y: 0, z: 5}
     connectedNodeIds: 0b000000
     isDestinationNode: 1
     debugLabel: Gate B7

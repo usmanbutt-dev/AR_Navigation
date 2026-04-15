@@ -174,18 +174,36 @@ namespace Nibrask.DebugUtils
 
             var canvas = labelGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
-            labelGo.transform.localScale = Vector3.one * 0.005f;
+            // Smaller overall scale so the canvas doesn't appear gigantic in AR
+            labelGo.transform.localScale = Vector3.one * 0.002f;
 
             var rectTransform = labelGo.GetComponent<RectTransform>();
-            rectTransform.sizeDelta = new Vector2(0.5f, 0.1f);
+            // Much wider rect so names like "Security Checkpoint" fit on one line
+            rectTransform.sizeDelta = new Vector2(300f, 40f);
 
+            // Semi-transparent dark background for readability against any AR scene
+            var bgGo = new GameObject("Background");
+            bgGo.transform.SetParent(labelGo.transform, false);
+            var bgImage = bgGo.AddComponent<UnityEngine.UI.Image>();
+            bgImage.color = new Color(0f, 0f, 0f, 0.55f);
+            var bgRect = bgGo.GetComponent<RectTransform>();
+            bgRect.anchorMin = Vector2.zero;
+            bgRect.anchorMax = Vector2.one;
+            bgRect.offsetMin = new Vector2(-10f, -4f);
+            bgRect.offsetMax = new Vector2(10f, 4f);
+
+            // Text element
             var textGo = new GameObject("Text");
             textGo.transform.SetParent(labelGo.transform, false);
 
             var tmp = textGo.AddComponent<TextMeshProUGUI>();
             tmp.text = text;
-            tmp.fontSize = 24;
+            tmp.fontSize = 18;
+            tmp.enableAutoSizing = true;
+            tmp.fontSizeMin = 10;
+            tmp.fontSizeMax = 18;
             tmp.alignment = TextAlignmentOptions.Center;
+            tmp.overflowMode = TextOverflowModes.Ellipsis;
             tmp.color = Color.white;
 
             var textRect = textGo.GetComponent<RectTransform>();

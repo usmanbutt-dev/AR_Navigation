@@ -15,7 +15,7 @@ MonoBehaviour:
   destinationName: Restroom A
   destinationType: 1
   icon: {fileID: 0}
-  relativePosition: {x: 1, y: 0, z: 1.4}
+  relativePosition: {x: 1.5, y: 0, z: 2.5}
   nearestWaypointIndex: 3
   flightNumber: 
   boardingTime: 

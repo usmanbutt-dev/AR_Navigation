@@ -15,7 +15,7 @@ MonoBehaviour:
   destinationName: Gate B3
   destinationType: 0
   icon: {fileID: 0}
-  relativePosition: {x: 2, y: 0, z: 3}
+  relativePosition: {x: 3.5, y: 0, z: 5}
   nearestWaypointIndex: 10
   flightNumber: QR-881
   boardingTime: 16:15

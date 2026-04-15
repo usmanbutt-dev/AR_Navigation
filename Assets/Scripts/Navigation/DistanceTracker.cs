@@ -15,15 +15,15 @@ namespace Nibrask.Navigation
         [Header("Settings")]
         [SerializeField]
         [Tooltip("Maximum allowed distance from the path before triggering off-route (meters)")]
-        private float offRouteThreshold = 1.5f;
+        private float offRouteThreshold = 2.0f;
 
         [SerializeField]
         [Tooltip("Distance to a waypoint to consider it 'reached' as a checkpoint (meters)")]
-        private float checkpointReachDistance = 0.5f;
+        private float checkpointReachDistance = 0.8f;
 
         [SerializeField]
         [Tooltip("Distance to the final destination to consider arrival (meters)")]
-        private float arrivalDistance = 0.7f;
+        private float arrivalDistance = 1.0f;
 
         [SerializeField]
         [Tooltip("Average walking speed in meters per second")]
