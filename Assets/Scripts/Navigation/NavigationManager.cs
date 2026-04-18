@@ -25,6 +25,10 @@ namespace Nibrask.Navigation
         [SerializeField]
         private DistanceTracker distanceTracker;
 
+        [SerializeField]
+        [Tooltip("Obstacle detector for dynamic edge blocking (optional)")]
+        private ObstacleDetector obstacleDetector;
+
         [Header("Settings")]
         [SerializeField]
         [Tooltip("Cooldown between route recalculations (seconds)")]
@@ -51,6 +55,7 @@ namespace Nibrask.Navigation
 
         private Transform userTransform;
         private float lastRecalculationTime;
+        private bool pendingReroute = false; // Set when obstacle fires during cooldown
 
         private void Start()
         {
@@ -72,6 +77,8 @@ namespace Nibrask.Navigation
             AppEvents.OnDestinationSelected += HandleDestinationSelected;
             AppEvents.OnOffRoute += HandleOffRoute;
             AppEvents.OnArrived += HandleArrived;
+            AppEvents.OnObstacleDetected += HandleObstacleDetected;
+            AppEvents.OnObstacleCleared += HandleObstacleCleared;
         }
 
         private void OnDisable()
@@ -82,6 +89,8 @@ namespace Nibrask.Navigation
             AppEvents.OnDestinationSelected -= HandleDestinationSelected;
             AppEvents.OnOffRoute -= HandleOffRoute;
             AppEvents.OnArrived -= HandleArrived;
+            AppEvents.OnObstacleDetected -= HandleObstacleDetected;
+            AppEvents.OnObstacleCleared -= HandleObstacleCleared;
         }
 
         private void Update()
@@ -90,6 +99,13 @@ namespace Nibrask.Navigation
 
             // Update the start of the visible path to follow user
             pathRenderer?.UpdateStartPosition(userTransform.position);
+
+            // Check for pending reroute (obstacle detected during cooldown)
+            if (pendingReroute && Time.time - lastRecalculationTime >= recalculationCooldown)
+            {
+                pendingReroute = false;
+                RecalculateRoute();
+            }
         }
 
         /// <summary>
@@ -169,11 +185,12 @@ namespace Nibrask.Navigation
             }
 
             // Compute path using A*
-            CurrentPath = PathFinder.FindPath(startNode, endNode);
+            CurrentPath = PathFinder.FindPath(startNode, endNode, obstacleDetector?.BlockedEdges);
 
             if (CurrentPath == null || CurrentPath.Count == 0)
             {
                 Debug.LogError($"[NavigationManager] No path found to '{destination.destinationName}'.");
+                AppEvents.RaiseRecalculationFailed();
                 return;
             }
 
@@ -223,11 +240,12 @@ namespace Nibrask.Navigation
 
             if (startNode == null || endNode == null) return;
 
-            CurrentPath = PathFinder.FindPath(startNode, endNode);
+            CurrentPath = PathFinder.FindPath(startNode, endNode, obstacleDetector?.BlockedEdges);
 
             if (CurrentPath == null || CurrentPath.Count == 0)
             {
                 Debug.LogWarning("[NavigationManager] Route recalculation failed — no path found.");
+                AppEvents.RaiseRecalculationFailed();
                 return;
             }
 
@@ -259,10 +277,51 @@ namespace Nibrask.Navigation
             isNavigating = false;
             CurrentPath = null;
             CurrentDestination = null;
+            pendingReroute = false;
 
             pathRenderer?.ClearPath();
             arrowGenerator?.ClearArrows();
             distanceTracker?.StopTracking();
+            obstacleDetector?.StopProbing();
+        }
+
+        /// <summary>
+        /// Handles obstacle detected — triggers reroute or queues one if cooling down.
+        /// </summary>
+        private void HandleObstacleDetected(int nodeA, int nodeB)
+        {
+            if (!isNavigating || CurrentDestination == null) return;
+
+            Debug.Log($"[NavigationManager] Obstacle detected on edge ({nodeA} → {nodeB}). Rerouting...");
+
+            if (Time.time - lastRecalculationTime >= recalculationCooldown)
+            {
+                RecalculateRoute();
+            }
+            else
+            {
+                // Cooldown active — queue for next Update tick
+                pendingReroute = true;
+            }
+        }
+
+        /// <summary>
+        /// Handles obstacle cleared — reroute to potentially find a shorter path.
+        /// </summary>
+        private void HandleObstacleCleared(int nodeA, int nodeB)
+        {
+            if (!isNavigating || CurrentDestination == null) return;
+
+            Debug.Log($"[NavigationManager] Obstacle cleared on edge ({nodeA} → {nodeB}). Checking for shorter route...");
+
+            if (Time.time - lastRecalculationTime >= recalculationCooldown)
+            {
+                RecalculateRoute();
+            }
+            else
+            {
+                pendingReroute = true;
+            }
         }
     }
 }
