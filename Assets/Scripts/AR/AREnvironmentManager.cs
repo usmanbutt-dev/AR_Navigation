@@ -159,13 +159,16 @@ namespace Nibrask.AR
                     break;
 
                 case AppState.DestinationSelection:
-                    // Keep planes but fade them out for cleaner visuals
-                    SetPlaneDetection(false);
+                    // Keep detection running so AR continuously maps the environment,
+                    // but hide visuals for a clean view
+                    SetPlaneDetection(true);
                     SetPlaneVisibility(false);
                     break;
 
                 case AppState.Navigating:
-                    SetPlaneDetection(false);
+                    // Detection stays on — the AR subsystem keeps refining its
+                    // spatial understanding as the user walks through the space
+                    SetPlaneDetection(true);
                     SetPlaneVisibility(false);
                     break;
 
