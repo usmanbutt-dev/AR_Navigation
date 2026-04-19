@@ -69,6 +69,10 @@ namespace Nibrask.UI
                 canvas.gameObject.AddComponent<GraphicRaycaster>();
                 Debug.Log("[ArrivalPanel] Added missing GraphicRaycaster to parent Canvas for touch input.");
             }
+
+            // Make this panel draggable so the user can move it out of the way
+            if (GetComponent<DraggablePanel>() == null)
+                gameObject.AddComponent<DraggablePanel>();
         }
 
         private void OnEnable()

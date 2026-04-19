@@ -58,6 +58,10 @@ namespace Nibrask.UI
         private float targetAlpha = 0f;
         private Vector3 targetScale = Vector3.zero;
 
+        // Tracks gate buttons whose countdown text needs live refresh
+        private readonly List<(DestinationData dest, TextMeshProUGUI label)> countdownLabels
+            = new List<(DestinationData, TextMeshProUGUI)>();
+
         private void Awake()
         {
             // Start hidden visually but keep GameObject active so OnEnable/Start subscriptions work
@@ -68,6 +72,10 @@ namespace Nibrask.UI
                 canvasGroup.blocksRaycasts = false;
             }
             transform.localScale = Vector3.zero;
+
+            // Make the menu draggable so users can move it out of the way
+            if (GetComponent<DraggablePanel>() == null)
+                gameObject.AddComponent<DraggablePanel>();
         }
 
         private void OnEnable()
@@ -182,6 +190,11 @@ namespace Nibrask.UI
             targetScale = Vector3.one;
             transform.localScale = Vector3.one * 0.5f;
 
+            // Refresh countdowns immediately then every 30 s while visible
+            RefreshCountdowns();
+            CancelInvoke(nameof(RefreshCountdowns));
+            InvokeRepeating(nameof(RefreshCountdowns), 30f, 30f);
+
             Debug.Log($"[DestinationSelectionMenu] Showing {mapData.destinations.Count} destinations.");
         }
 
@@ -196,8 +209,35 @@ namespace Nibrask.UI
             targetAlpha = 0f;
             targetScale = Vector3.one * 0.8f;
 
+            CancelInvoke(nameof(RefreshCountdowns));
             CancelInvoke(nameof(DeactivateSelf)); // Prevent stale timers hiding re-shown menu (Fix #5)
             Invoke(nameof(DeactivateSelf), 0.5f);
+        }
+
+        /// <summary>
+        /// Updates the boarding countdown text on all registered gate buttons.
+        /// Called immediately on Show() then every 30 seconds via InvokeRepeating.
+        /// This keeps the time-left display live without rebuilding buttons.
+        /// </summary>
+        private void RefreshCountdowns()
+        {
+            foreach (var (dest, label) in countdownLabels)
+            {
+                if (label == null) continue;
+
+                // Rebuild only the countdown line; keep the static lines intact
+                string baseText = $"Gate: {dest.destinationName}";
+                if (!string.IsNullOrEmpty(dest.flightNumber))
+                    baseText += $"\n{dest.flightNumber}";
+                if (!string.IsNullOrEmpty(dest.airlineName))
+                    baseText += $" \u2022 {dest.airlineName}";
+
+                string timeLeft = dest.GetTimeUntilBoarding();
+                if (!string.IsNullOrEmpty(timeLeft))
+                    baseText += $"\n\u23f1 Boards in {timeLeft}";
+
+                label.text = baseText;
+            }
         }
 
         /// <summary>
@@ -242,25 +282,24 @@ namespace Nibrask.UI
             var buttonText = buttonGo.GetComponentInChildren<TextMeshProUGUI>();
             if (buttonText != null)
             {
-                string displayText;
                 if (destination.destinationType != DestinationType.Gate)
                 {
-                    displayText = $"{destination.GetTypeLabel()}\n{destination.destinationName}";
+                    buttonText.text = $"{destination.GetTypeLabel()}\n{destination.destinationName}";
                 }
                 else
                 {
-                    displayText = $"Gate: {destination.destinationName}";
+                    // Build base text (static parts)
+                    string baseText = $"Gate: {destination.destinationName}";
                     if (!string.IsNullOrEmpty(destination.flightNumber))
-                        displayText += $"\n{destination.flightNumber}";
+                        baseText += $"\n{destination.flightNumber}";
                     if (!string.IsNullOrEmpty(destination.airlineName))
-                        displayText += $" • {destination.airlineName}";
+                        baseText += $" • {destination.airlineName}";
 
-                    // Show countdown to boarding time
-                    string timeLeft = destination.GetTimeUntilBoarding();
-                    if (!string.IsNullOrEmpty(timeLeft))
-                        displayText += $"\n⏱ Boards in {timeLeft}";
+                    buttonText.text = baseText;
+
+                    // Register this label for live countdown refresh
+                    countdownLabels.Add((destination, buttonText));
                 }
-                buttonText.text = displayText;
             }
 
             // Configure the button icon
@@ -342,6 +381,8 @@ namespace Nibrask.UI
                 if (btn != null) Destroy(btn);
             }
             spawnedButtons.Clear();
+            // Clear tracked countdown labels so stale refs don't accumulate on re-open
+            countdownLabels.Clear();
         }
 
         /// <summary>
