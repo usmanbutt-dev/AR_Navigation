@@ -1,39 +1,33 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace Nibrask.UI
 {
     /// <summary>
-    /// Attach to any world-space panel to make it drag-movable by touch or mouse.
-    /// The panel is repositioned by sliding it across a virtual plane that is
-    /// perpendicular to the camera-to-panel direction at the panel's current depth.
+    /// Attach to any world-space UI panel to make it drag-movable by touch.
     ///
-    /// - A short hold threshold (0.25 s) prevents accidental drags during normal taps.
-    /// - Dragging is blocked while a button press is being evaluated; it only
-    ///   activates once the finger has moved beyond a small dead-zone (8 px).
-    /// - The Billboard component (if present) is temporarily disabled while
-    ///   dragging so the panel doesn't snap back to face the camera mid-drag.
+    /// Uses Unity's EventSystem drag interfaces so it works with UI Canvases
+    /// (GraphicRaycaster) instead of Physics.Raycast which only hits 3D colliders.
+    ///
+    /// How it plays with buttons:
+    ///   - A quick tap on a button fires the button's onClick normally.
+    ///   - A held drag on a button (or any graphic child) bubbles up to this
+    ///     handler and moves the panel instead. Unity's EventSystem handles the
+    ///     distinction automatically via its drag threshold.
+    ///
+    /// If the panel root has no Graphic component, an invisible Image is added
+    /// at Awake so the full panel area is draggable, not just the buttons/text.
     /// </summary>
-    public class DraggablePanel : MonoBehaviour
+    public class DraggablePanel : MonoBehaviour,
+        IBeginDragHandler, IDragHandler, IEndDragHandler
     {
-        [Header("Drag Settings")]
-
-        [Tooltip("Minimum finger-move distance in screen pixels before dragging begins. " +
-                 "Prevents accidental drags when tapping buttons.")]
-        [SerializeField] private float dragDeadZonePx = 8f;
-
-        [Tooltip("How quickly the panel follows the finger (lerp speed). " +
-                 "Set to a very large number for snap-to-finger feel.")]
-        [SerializeField] private float followSpeed = 25f;
-
         // ── State ─────────────────────────────────────────────────────────────
 
-        private bool isDragging = false;
-        private int activeTouchId = -1;        // finger tracking for multi-touch
-        private Vector2 touchStartScreen;      // where the finger first landed
-        private float panelDepth;              // world depth of panel from camera
-        private Vector3 dragOffsetWorld;       // offset from panel pivot to pick ray hit
         private Camera arCamera;
-        private Billboard billboard;           // optional — paused while dragging
+        private float panelDepth;          // distance from camera along forward
+        private Vector3 dragOffset;        // offset from pivot to first touch point
+        private Billboard billboard;       // paused during drag to prevent snap-back
 
         // ── Unity ─────────────────────────────────────────────────────────────
 
@@ -41,128 +35,72 @@ namespace Nibrask.UI
         {
             arCamera = Camera.main;
             billboard = GetComponent<Billboard>();
+
+            // The EventSystem will only detect touches on GameObjects that have
+            // a Graphic component (Image, Text, etc.). If this panel root doesn't
+            // have one, we add an invisible Image so the entire rect is draggable.
+            EnsureRaycastGraphic();
         }
 
-        private void Update()
+        // ── IBeginDragHandler ─────────────────────────────────────────────────
+
+        public void OnBeginDrag(PointerEventData eventData)
         {
-#if UNITY_EDITOR || UNITY_STANDALONE
-            HandleMouse();
-#else
-            HandleTouch();
-#endif
-        }
-
-        // ── Mouse (Editor / PC) ───────────────────────────────────────────────
-
-        private void HandleMouse()
-        {
-            if (Input.GetMouseButtonDown(0))
-            {
-                TryBeginDrag(Input.mousePosition);
-            }
-            else if (Input.GetMouseButton(0) && isDragging)
-            {
-                UpdateDragPosition(Input.mousePosition);
-            }
-            else if (Input.GetMouseButtonUp(0))
-            {
-                EndDrag();
-            }
-        }
-
-        // ── Touch (Device) ────────────────────────────────────────────────────
-
-        private void HandleTouch()
-        {
-            if (Input.touchCount == 0) return;
-
-            // Track a specific finger so multi-touch doesn't confuse dragging
-            if (!isDragging)
-            {
-                foreach (Touch t in Input.touches)
-                {
-                    if (t.phase == TouchPhase.Began)
-                    {
-                        TryBeginDrag(t.position);
-                        if (isDragging)
-                        {
-                            activeTouchId = t.fingerId;
-                            break;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                foreach (Touch t in Input.touches)
-                {
-                    if (t.fingerId != activeTouchId) continue;
-
-                    if (t.phase == TouchPhase.Moved || t.phase == TouchPhase.Stationary)
-                        UpdateDragPosition(t.position);
-                    else if (t.phase == TouchPhase.Ended || t.phase == TouchPhase.Canceled)
-                        EndDrag();
-
-                    break;
-                }
-            }
-        }
-
-        // ── Core Drag Logic ───────────────────────────────────────────────────
-
-        /// <summary>
-        /// Casts a ray from the given screen point and, if it hits this panel's
-        /// collider, begins a drag session.
-        /// </summary>
-        private void TryBeginDrag(Vector2 screenPos)
-        {
+            if (arCamera == null) arCamera = Camera.main;
             if (arCamera == null) return;
 
-            Ray ray = arCamera.ScreenPointToRay(screenPos);
+            // Capture the panel's distance from camera so we move on the same plane
+            panelDepth = Vector3.Dot(
+                transform.position - arCamera.transform.position,
+                arCamera.transform.forward);
 
-            // Check if the touch lands on any collider that is part of this panel
-            if (!Physics.Raycast(ray, out RaycastHit hit)) return;
-            if (!hit.collider.transform.IsChildOf(transform) && hit.collider.transform != transform)
-                return;
+            // Calculate offset so the panel doesn't snap its pivot to the finger
+            Vector3 worldPoint = arCamera.ScreenToWorldPoint(
+                new Vector3(eventData.position.x, eventData.position.y, panelDepth));
+            dragOffset = transform.position - worldPoint;
 
-            // Record state for this drag
-            touchStartScreen = screenPos;
-            panelDepth = Vector3.Dot(transform.position - arCamera.transform.position,
-                                     arCamera.transform.forward);
-            Vector3 hitWorld = arCamera.ScreenToWorldPoint(
-                new Vector3(screenPos.x, screenPos.y, panelDepth));
-            dragOffsetWorld = transform.position - hitWorld;
-
-            isDragging = true;
-            SetBillboardEnabled(false);
+            // Pause billboard so the panel doesn't fight the drag
+            if (billboard != null)
+                billboard.enabled = false;
         }
 
-        private void UpdateDragPosition(Vector2 screenPos)
+        // ── IDragHandler ──────────────────────────────────────────────────────
+
+        public void OnDrag(PointerEventData eventData)
         {
             if (arCamera == null) return;
-
-            // Dead-zone: only start moving once the finger has travelled enough pixels
-            if ((screenPos - touchStartScreen).magnitude < dragDeadZonePx) return;
 
             Vector3 worldPoint = arCamera.ScreenToWorldPoint(
-                new Vector3(screenPos.x, screenPos.y, panelDepth));
-
-            Vector3 target = worldPoint + dragOffsetWorld;
-            transform.position = Vector3.Lerp(transform.position, target, Time.deltaTime * followSpeed);
+                new Vector3(eventData.position.x, eventData.position.y, panelDepth));
+            transform.position = worldPoint + dragOffset;
         }
 
-        private void EndDrag()
+        // ── IEndDragHandler ───────────────────────────────────────────────────
+
+        public void OnEndDrag(PointerEventData eventData)
         {
-            isDragging = false;
-            activeTouchId = -1;
             // Re-enable billboard so the panel faces camera again after release
-            SetBillboardEnabled(true);
+            if (billboard != null)
+                billboard.enabled = true;
         }
 
-        private void SetBillboardEnabled(bool value)
+        // ── Helpers ───────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Ensures this GameObject has a raycast-targetable Graphic so the
+        /// EventSystem can detect drags even on "empty" areas of the panel
+        /// (not just on child buttons/text).
+        /// </summary>
+        private void EnsureRaycastGraphic()
         {
-            if (billboard != null)
-                billboard.enabled = value;
+            // If there's already a Graphic on this GO, we're fine
+            if (GetComponent<Graphic>() != null) return;
+
+            var img = gameObject.AddComponent<Image>();
+            img.color = new Color(0f, 0f, 0f, 0f); // fully transparent
+            img.raycastTarget = true;
+
+            Debug.Log($"[DraggablePanel] Added invisible raycast Image to '{gameObject.name}'.");
         }
     }
 }
