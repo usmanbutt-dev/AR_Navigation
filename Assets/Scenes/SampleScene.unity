@@ -917,13 +917,14 @@ MonoBehaviour:
   clearCooldown: 2
   minSegmentLength: 0.5
   obstacleLayers:
-    serializedVersion: 2
     m_Bits: 1
   ignoreLayers:
-    serializedVersion: 2
     m_Bits: 1073741862
   navigationManager: {fileID: 268021594}
   waypointGraph: {fileID: 701928951}
+  isProbing: 0
+  lastProbeTime: 0
+  effectiveLayerMask: 0
 --- !u!4 &106855824
 Transform:
   m_ObjectHideFlags: 0
@@ -1437,7 +1438,6 @@ MonoBehaviour:
   pathRenderer: {fileID: 873653522}
   arrowGenerator: {fileID: 1327964745}
   distanceTracker: {fileID: 268021593}
-  obstacleDetector: {fileID: 0}
   recalculationCooldown: 3
   isNavigating: 0
 --- !u!1001 &331264285
@@ -1676,7 +1676,6 @@ MonoBehaviour:
   planeManager: {fileID: 151853166}
   raycastManager: {fileID: 331264288}
   anchorManager: {fileID: 331264290}
-  meshManager: {fileID: 0}
   minPlaneAreaForDetection: 0.5
   anchorVisualizerPrefab: {fileID: 0}
   floorDetected: 0

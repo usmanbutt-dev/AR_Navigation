@@ -60,6 +60,15 @@ namespace Nibrask.UI
                 canvasGroup.interactable = false;
                 canvasGroup.blocksRaycasts = false;
             }
+
+            // World-space canvases MUST have a GraphicRaycaster for button clicks to work.
+            // Ensure one exists on our Canvas (or the nearest parent Canvas).
+            var canvas = GetComponentInParent<Canvas>();
+            if (canvas != null && canvas.GetComponent<GraphicRaycaster>() == null)
+            {
+                canvas.gameObject.AddComponent<GraphicRaycaster>();
+                Debug.Log("[ArrivalPanel] Added missing GraphicRaycaster to parent Canvas for touch input.");
+            }
         }
 
         private void OnEnable()
@@ -167,6 +176,13 @@ namespace Nibrask.UI
             // Start animations
             targetAlpha = 1f;
             checkmarkTargetScale = 1f;
+
+            // Enable interaction so the button is tappable
+            if (canvasGroup != null)
+            {
+                canvasGroup.interactable = true;
+                canvasGroup.blocksRaycasts = true;
+            }
 
             if (checkmarkIcon != null)
                 checkmarkIcon.transform.localScale = Vector3.zero;
