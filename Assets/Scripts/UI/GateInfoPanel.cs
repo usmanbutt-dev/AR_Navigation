@@ -81,7 +81,6 @@ namespace Nibrask.UI
             AppEvents.OnBackOnRoute += HandleBackOnRoute;
             AppEvents.OnRouteRecalculated += HandleRouteRecalculated;
             AppEvents.OnRecalculationFailed += HandleRecalculationFailed; // Fix #11
-            AppEvents.OnObstacleDetected += HandleObstacleDetected;
         }
 
         private void OnDisable()
@@ -94,7 +93,6 @@ namespace Nibrask.UI
             AppEvents.OnBackOnRoute -= HandleBackOnRoute;
             AppEvents.OnRouteRecalculated -= HandleRouteRecalculated;
             AppEvents.OnRecalculationFailed -= HandleRecalculationFailed; // Fix #11
-            AppEvents.OnObstacleDetected -= HandleObstacleDetected;
         }
 
         private void Start()
@@ -169,10 +167,15 @@ namespace Nibrask.UI
                     string flightInfo = "";
                     if (!string.IsNullOrEmpty(destination.flightNumber))
                         flightInfo += destination.flightNumber;
+                    if (!string.IsNullOrEmpty(destination.airlineName))
+                        flightInfo += $" • {destination.airlineName}";
                     if (!string.IsNullOrEmpty(destination.boardingTime))
                         flightInfo += $"\nBoarding: {destination.boardingTime}";
-                    if (!string.IsNullOrEmpty(destination.airlineName))
-                        flightInfo += $"\n{destination.airlineName}";
+
+                    // Show live countdown to boarding
+                    string timeLeft = destination.GetTimeUntilBoarding();
+                    if (!string.IsNullOrEmpty(timeLeft))
+                        flightInfo += $"  (in {timeLeft})";
 
                     flightInfoText.text = flightInfo;
                     flightInfoText.gameObject.SetActive(true);
@@ -327,17 +330,8 @@ namespace Nibrask.UI
             // on "Off route — recalculating..."
             if (statusText != null)
             {
-                statusText.text = "No alternative route available";
-                statusText.color = new Color(1.0f, 0.3f, 0.2f);
-            }
-        }
-
-        private void HandleObstacleDetected(int nodeA, int nodeB)
-        {
-            if (statusText != null)
-            {
-                statusText.text = "Obstacle detected — rerouting...";
-                statusText.color = new Color(1.0f, 0.7f, 0.0f);
+                statusText.text = "Error: No path found";
+                statusText.color = new Color(1.0f, 0.4f, 0.1f);
             }
         }
 

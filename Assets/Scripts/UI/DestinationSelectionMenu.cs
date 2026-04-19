@@ -242,7 +242,7 @@ namespace Nibrask.UI
             var buttonText = buttonGo.GetComponentInChildren<TextMeshProUGUI>();
             if (buttonText != null)
             {
-                string displayText = destination.GetDisplayName();
+                string displayText;
                 if (destination.destinationType != DestinationType.Gate)
                 {
                     displayText = $"{destination.GetTypeLabel()}\n{destination.destinationName}";
@@ -252,8 +252,13 @@ namespace Nibrask.UI
                     displayText = $"Gate: {destination.destinationName}";
                     if (!string.IsNullOrEmpty(destination.flightNumber))
                         displayText += $"\n{destination.flightNumber}";
-                    if (!string.IsNullOrEmpty(destination.boardingTime))
-                        displayText += $" • {destination.boardingTime}";
+                    if (!string.IsNullOrEmpty(destination.airlineName))
+                        displayText += $" • {destination.airlineName}";
+
+                    // Show countdown to boarding time
+                    string timeLeft = destination.GetTimeUntilBoarding();
+                    if (!string.IsNullOrEmpty(timeLeft))
+                        displayText += $"\n⏱ Boards in {timeLeft}";
                 }
                 buttonText.text = displayText;
             }

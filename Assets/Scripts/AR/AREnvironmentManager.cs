@@ -30,10 +30,6 @@ namespace Nibrask.AR
         [Tooltip("Reference to the ARAnchorManager on the XR Origin")]
         private ARAnchorManager anchorManager;
 
-        [SerializeField]
-        [Tooltip("Reference to the ARMeshManager on the XR Origin (optional — enables obstacle detection)")]
-        private ARMeshManager meshManager;
-
         [Header("Settings")]
         [SerializeField]
         [Tooltip("Minimum plane area (m²) required to consider the floor detected")]
@@ -64,11 +60,6 @@ namespace Nibrask.AR
         /// The terminal origin anchor transform. All destination positions are relative to this.
         /// </summary>
         public Transform TerminalOrigin { get; private set; }
-
-        /// <summary>
-        /// Whether AR meshing is available on this device (mesh manager assigned and subsystem present).
-        /// </summary>
-        public bool MeshingAvailable => meshManager != null;
 
         private readonly List<ARRaycastHit> raycastHits = new List<ARRaycastHit>();
         private GameObject anchorVisualizer;
@@ -176,16 +167,11 @@ namespace Nibrask.AR
                 case AppState.Navigating:
                     SetPlaneDetection(false);
                     SetPlaneVisibility(false);
-                    // Keep mesh subsystem running for obstacle detection,
-                    // but hide the visual mesh so it doesn't clutter the AR view
-                    SetMeshDetection(true);
-                    SetMeshVisibility(false);
                     break;
 
                 case AppState.Arrival:
                     SetPlaneDetection(false);
                     SetPlaneVisibility(false);
-                    SetMeshDetection(false);
                     break;
             }
         }
@@ -321,32 +307,6 @@ namespace Nibrask.AR
             if (planeManager != null)
             {
                 planeManager.enabled = enabled;
-            }
-        }
-
-        /// <summary>
-        /// Enables or disables AR mesh detection.
-        /// </summary>
-        private void SetMeshDetection(bool enabled)
-        {
-            if (meshManager != null)
-            {
-                meshManager.enabled = enabled;
-            }
-        }
-
-        /// <summary>
-        /// Shows or hides AR mesh visuals (keeps colliders for raycasting).
-        /// </summary>
-        private void SetMeshVisibility(bool visible)
-        {
-            if (meshManager == null) return;
-
-            foreach (var meshFilter in meshManager.GetComponentsInChildren<MeshFilter>())
-            {
-                var renderer = meshFilter.GetComponent<MeshRenderer>();
-                if (renderer != null)
-                    renderer.enabled = visible;
             }
         }
 

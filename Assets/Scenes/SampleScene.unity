@@ -877,6 +877,68 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 100321772}
   m_CullTransparentMesh: 1
+--- !u!1 &106855822
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 106855824}
+  - component: {fileID: 106855823}
+  m_Layer: 0
+  m_Name: ObstacleDetector
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &106855823
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 106855822}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a2c102f29dbaf1499e1cfbf9d2fdcee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Nibrask.Navigation.ObstacleDetector
+  probeInterval: 1
+  probeHeights:
+  - 0.3
+  - 0.6
+  - 1
+  probeRadius: 0.15
+  raysPerSegment: 5
+  obstacleDebounceCount: 3
+  clearCooldown: 2
+  minSegmentLength: 0.5
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  ignoreLayers:
+    serializedVersion: 2
+    m_Bits: 1073741862
+  navigationManager: {fileID: 268021594}
+  waypointGraph: {fileID: 701928951}
+--- !u!4 &106855824
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 106855822}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &151853166 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2512387470528047737, guid: 48cb3fb68c91eb94999fd99957eb0cae, type: 3}
@@ -1375,6 +1437,7 @@ MonoBehaviour:
   pathRenderer: {fileID: 873653522}
   arrowGenerator: {fileID: 1327964745}
   distanceTracker: {fileID: 268021593}
+  obstacleDetector: {fileID: 0}
   recalculationCooldown: 3
   isNavigating: 0
 --- !u!1001 &331264285
@@ -1613,6 +1676,7 @@ MonoBehaviour:
   planeManager: {fileID: 151853166}
   raycastManager: {fileID: 331264288}
   anchorManager: {fileID: 331264290}
+  meshManager: {fileID: 0}
   minPlaneAreaForDetection: 0.5
   anchorVisualizerPrefab: {fileID: 0}
   floorDetected: 0
@@ -10315,3 +10379,4 @@ SceneRoots:
   - {fileID: 766185623}
   - {fileID: 901232579}
   - {fileID: 608830357}
+  - {fileID: 106855824}

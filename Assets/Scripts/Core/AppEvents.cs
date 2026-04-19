@@ -76,22 +76,6 @@ namespace Nibrask.Core
         public static event Action<DestinationData> OnArrived;
         public static void RaiseArrived(DestinationData destination) => OnArrived?.Invoke(destination);
 
-        // ── Obstacle Detection Events ────────────────────────────────────
-
-        /// <summary>
-        /// Fired when an obstacle is detected blocking a path segment.
-        /// Parameters: nodeId of segment start, nodeId of segment end.
-        /// </summary>
-        public static event Action<int, int> OnObstacleDetected;
-        public static void RaiseObstacleDetected(int nodeA, int nodeB) => OnObstacleDetected?.Invoke(nodeA, nodeB);
-
-        /// <summary>
-        /// Fired when a previously blocked path segment is cleared.
-        /// Parameters: nodeId of segment start, nodeId of segment end.
-        /// </summary>
-        public static event Action<int, int> OnObstacleCleared;
-        public static void RaiseObstacleCleared(int nodeA, int nodeB) => OnObstacleCleared?.Invoke(nodeA, nodeB);
-
         // ── UI Events ──────────────────────────────────────────────────────
 
         /// <summary>
@@ -136,8 +120,6 @@ namespace Nibrask.Core
             OnOnboardingComplete = null;
             OnNavigateAgain = null;
             OnDistanceUpdated = null;
-            OnObstacleDetected = null;
-            OnObstacleCleared = null;
         }
     }
 }

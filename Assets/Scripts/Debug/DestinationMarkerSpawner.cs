@@ -42,7 +42,7 @@ namespace Nibrask.DebugUtils
 
         [SerializeField]
         [Tooltip("Height above the marker to place the label")]
-        private float labelHeightOffset = 0.25f;
+        private float labelHeightOffset = 0.6f;
 
         [Header("General")]
         [SerializeField]
@@ -98,6 +98,10 @@ namespace Nibrask.DebugUtils
                 // Instantiate the assigned prefab
                 marker = Instantiate(prefab, worldPos, Quaternion.identity, transform);
                 marker.name = $"Marker_{dest.destinationName}";
+
+                // Add a colored ring/base under the prefab to differentiate
+                // gates that share the same prefab model
+                SpawnColoredBase(dest, worldPos, marker.transform);
             }
             else
             {
@@ -112,6 +116,62 @@ namespace Nibrask.DebugUtils
             if (showLabels)
             {
                 SpawnLabel(dest.destinationName, worldPos + Vector3.up * labelHeightOffset, marker.transform);
+            }
+        }
+
+        /// <summary>
+        /// Spawns a flat colored cylinder ring under a marker to visually differentiate
+        /// destinations that share the same prefab.
+        /// </summary>
+        private void SpawnColoredBase(DestinationData dest, Vector3 worldPos, Transform parent)
+        {
+            var ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            ring.name = "ColorBase";
+            ring.transform.SetParent(parent, worldPositionStays: true);
+            ring.transform.position = worldPos - Vector3.up * heightOffset; // flush with floor
+            ring.transform.localScale = new Vector3(0.5f, 0.01f, 0.5f); // flat disc
+
+            // Remove collider
+            var col = ring.GetComponent<Collider>();
+            if (col != null) Destroy(col);
+
+            // Unique color per destination using name hash
+            Color baseColor = GetDestinationColor(dest);
+            var rend = ring.GetComponent<Renderer>();
+            if (rend != null)
+            {
+                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                if (mat == null) mat = new Material(Shader.Find("Standard"));
+                mat.color = baseColor;
+                mat.EnableKeyword("_EMISSION");
+                mat.SetColor("_EmissionColor", baseColor * 2f);
+                rend.material = mat;
+            }
+        }
+
+        /// <summary>
+        /// Returns a unique color for a destination, using the name hash for gates
+        /// and fixed colors for service types.
+        /// </summary>
+        private Color GetDestinationColor(DestinationData dest)
+        {
+            switch (dest.destinationType)
+            {
+                case DestinationType.Gate:
+                    float h = (float)(Mathf.Abs(dest.destinationName.GetHashCode()) % 360) / 360f;
+                    return Color.HSVToRGB(h, 0.8f, 1f);
+                case DestinationType.Restroom:
+                    return Color.cyan;
+                case DestinationType.Restaurant:
+                    return new Color(1f, 0.5f, 0f);
+                case DestinationType.SecurityCheckpoint:
+                    return new Color(1f, 1f, 0.3f);
+                case DestinationType.Exit:
+                    return Color.red;
+                case DestinationType.Lounge:
+                    return new Color(0.6f, 0.2f, 1f);
+                default:
+                    return Color.white;
             }
         }
 
@@ -174,37 +234,38 @@ namespace Nibrask.DebugUtils
 
             var canvas = labelGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
-            // Smaller overall scale so the canvas doesn't appear gigantic in AR
-            labelGo.transform.localScale = Vector3.one * 0.002f;
+            // Scale large enough to be readable from 5–10m away
+            labelGo.transform.localScale = Vector3.one * 0.005f;
 
             var rectTransform = labelGo.GetComponent<RectTransform>();
-            // Much wider rect so names like "Security Checkpoint" fit on one line
-            rectTransform.sizeDelta = new Vector2(300f, 40f);
+            // Wide canvas so long names fit comfortably on one line
+            rectTransform.sizeDelta = new Vector2(400f, 60f);
 
-            // Semi-transparent dark background for readability against any AR scene
+            // Dark background panel for readability against any AR scene
             var bgGo = new GameObject("Background");
             bgGo.transform.SetParent(labelGo.transform, false);
             var bgImage = bgGo.AddComponent<UnityEngine.UI.Image>();
-            bgImage.color = new Color(0f, 0f, 0f, 0.55f);
+            bgImage.color = new Color(0f, 0f, 0f, 0.7f);
             var bgRect = bgGo.GetComponent<RectTransform>();
             bgRect.anchorMin = Vector2.zero;
             bgRect.anchorMax = Vector2.one;
-            bgRect.offsetMin = new Vector2(-10f, -4f);
-            bgRect.offsetMax = new Vector2(10f, 4f);
+            bgRect.offsetMin = new Vector2(-16f, -6f);
+            bgRect.offsetMax = new Vector2(16f, 6f);
 
-            // Text element
+            // Text element — large font, auto-sizing to fit
             var textGo = new GameObject("Text");
             textGo.transform.SetParent(labelGo.transform, false);
 
             var tmp = textGo.AddComponent<TextMeshProUGUI>();
             tmp.text = text;
-            tmp.fontSize = 18;
+            tmp.fontSize = 36;
             tmp.enableAutoSizing = true;
-            tmp.fontSizeMin = 10;
-            tmp.fontSizeMax = 18;
+            tmp.fontSizeMin = 14;
+            tmp.fontSizeMax = 36;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.overflowMode = TextOverflowModes.Ellipsis;
             tmp.color = Color.white;
+            tmp.fontStyle = FontStyles.Bold;
 
             var textRect = textGo.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;

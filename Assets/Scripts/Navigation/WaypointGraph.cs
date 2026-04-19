@@ -196,39 +196,6 @@ namespace Nibrask.Navigation
         }
 
         /// <summary>
-        /// Gets the world positions of two nodes forming an edge.
-        /// Returns false if either node doesn't exist.
-        /// </summary>
-        public bool GetEdgeWorldPositions(int nodeIdA, int nodeIdB, out Vector3 posA, out Vector3 posB)
-        {
-            posA = Vector3.zero;
-            posB = Vector3.zero;
-
-            if (!nodes.TryGetValue(nodeIdA, out var nodeA) || !nodes.TryGetValue(nodeIdB, out var nodeB))
-                return false;
-
-            posA = nodeA.WorldPosition;
-            posB = nodeB.WorldPosition;
-            return true;
-        }
-
-        /// <summary>
-        /// Returns the list of (nodeIdA, nodeIdB) edge pairs along a given path.
-        /// Used by ObstacleDetector to know which segments to probe.
-        /// </summary>
-        public List<(int, int)> GetPathEdges(List<WaypointNode> path)
-        {
-            var edges = new List<(int, int)>();
-            if (path == null) return edges;
-
-            for (int i = 0; i < path.Count - 1; i++)
-            {
-                edges.Add((path[i].nodeId, path[i + 1].nodeId));
-            }
-            return edges;
-        }
-
-        /// <summary>
         /// Counts total connections in the graph (each edge counted once).
         /// </summary>
         private int CountConnections()

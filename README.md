@@ -21,7 +21,6 @@ All cross-component communication happens here.
 *   **AR Events:** `OnFloorDetected`, `OnTerminalAnchorPlaced`
 *   **Navigation Actions:** `OnDestinationSelected`, `OnNavigationStarted`, `OnArrived`, `OnNavigateAgain`
 *   **Tracking Updates:** `OnDistanceUpdated`, `OnCheckpointReached`, `OnOffRoute`, `OnBackOnRoute`, `OnRouteRecalculated`
-*   **Obstacle Detection:** `OnObstacleDetected(nodeA, nodeB)`, `OnObstacleCleared(nodeA, nodeB)`
 
 This architecture allows the UI, Audio, Haptics, and AR visualizers to react to events without tightly coupling their references to the Navigation engine.
 
@@ -42,7 +41,7 @@ When `OnTerminalAnchorPlaced` is fired by the AR system:
 4.  Nodes parse their `connectedNodeIds` to create bidirectional edges for traversal.
 
 ### Pathfinding (`PathFinder.cs`)
-An optimized **A* (A-Star) search algorithm** that takes a start node and an end node, utilizing the world-space distance between nodes as both the *g-cost* and *h-cost* (heuristic). It returns a `List<WaypointNode>` representing the shortest path. Supports an optional `HashSet<(int,int)> blockedEdges` parameter — edges in this set are skipped during neighbor exploration, allowing A* to naturally route around obstacles.
+An optimized **A* (A-Star) search algorithm** that takes a start node and an end node, utilizing the world-space distance between nodes as both the *g-cost* and *h-cost* (heuristic). It returns a `List<WaypointNode>` representing the shortest path.
 
 ---
 
@@ -56,7 +55,7 @@ The brain. When a destination is selected:
 2.  Queries `WaypointGraph` for the closest starting node based purely on XZ (horizontal) distance.
 3.  Fetches the destination node and asks `PathFinder` for the route.
 4.  Hands the resulting `List<WaypointNode>` to the visualizers and `DistanceTracker`.
-5.  If an `OnOffRoute` or `OnObstacleDetected` event fires, it automatically initiates a `RecalculateRoute` loop (cooldown 1.5s). Obstacle events that arrive during cooldown are queued via a `pendingReroute` flag and processed on the next Update tick.
+5.  If an `OnOffRoute` event fires, it automatically initiates a `RecalculateRoute` loop (cooldown 1.5s).
 
 ### `DistanceTracker.cs`
 Runs on an `InvokeRepeating` loop (every 0.2s) to monitor user progress.
@@ -84,11 +83,10 @@ Runs on an `InvokeRepeating` loop (every 0.2s) to monitor user progress.
 
 ## 📱 AR Subsystems (`AREnvironmentManager.cs`)
 
-Manages the core `ARFoundation` components (`ARPlaneManager`, `ARRaycastManager`, `ARAnchorManager`, and optionally `ARMeshManager`).
+Manages the core `ARFoundation` components (`ARPlaneManager`, `ARRaycastManager`, `ARAnchorManager`).
 *   **Scanning State:** Enables plane visuals so the user can see horizontal planes being tracked. Touch input runs raycasts against planes.
 *   **Anchor Placement:** When the user taps a valid plane, an `ARAnchor` is spawned. This becomes the `Terminal Origin`.
-*   **Navigation State:** Disables the plane visualizers. If an `ARMeshManager` is assigned, the mesh subsystem stays **active** (for obstacle detection raycasts) but mesh **visuals are hidden** so the AR view stays clean. Exposes a `MeshingAvailable` property for other systems to check.
-*   **Arrival State:** Disables both plane and mesh detection to save battery.
+*   **Navigation State:** Disables the plane visualizers. Raycasting remains mathematically functional, but the floor grid disappears to provide an uncluttered, immersive experience while following the navigation line.
 
 ---
 
@@ -106,29 +104,6 @@ Manages the core `ARFoundation` components (`ARPlaneManager`, `ARRaycastManager`
 
 ---
 
-## 🧱 Obstacle Detection (`ObstacleDetector.cs`)
-
-A hybrid obstacle avoidance system that detects physical obstructions blocking navigation path segments using raycasts, without the performance cost of full NavMesh baking.
-
-### How It Works
-1.  When navigation starts, `ObstacleDetector` begins probing **only the active path segments** (typically 3–8 edges, not the full graph).
-2.  Every `probeInterval` seconds (default: 1.0s), it casts `SphereCast` rays along each segment at multiple heights (0.3m, 0.6m, 1.0m above floor).
-3.  If rays hit colliders above floor level, an internal hit counter increments. After `obstacleDebounceCount` (default: 3) consecutive detections, the edge is marked **blocked**.
-4.  `NavigationManager` passes `ObstacleDetector.BlockedEdges` to `PathFinder.FindPath()`, which skips blocked edges during A* neighbor exploration.
-5.  A* naturally finds an alternative route. If ALL paths are blocked, `OnRecalculationFailed` fires.
-6.  When the obstacle is removed, raycasts clear. After a `clearCooldown` (default: 2s), the edge is unblocked and the system reroutes to the optimal path.
-
-### Design Decisions
-*   **Debounce counter** prevents false positives from noisy AR mesh data.
-*   **Clear cooldown** prevents path flickering when an obstacle appears/disappears rapidly.
-*   **Graceful degradation**: If `ARMeshManager` is not assigned or the device lacks depth sensors, `ObstacleDetector` still works — it just won't detect obstacles through mesh colliders (the system falls back to the existing off-route rerouting).
-*   **Pending reroute flag**: If an obstacle event fires during the recalculation cooldown, it's queued and processed on the next `Update` tick rather than being silently dropped.
-
----
-
 ### Important Edge Cases Addressed
 1.  **3D Math in a 2D Floorplan**: Because a user holds a phone at ~1.6m high, regular `Vector3.Distance` checks between the camera and a node on the floor heavily inflate the result. `DistanceTracker` and `WaypointGraph.FindNearestNode` explicitly project camera positions down to the floor's Y-level before doing proximity matching.
-2.  **Start == End Reroutes**: If a user reroutes while physically standing *on* their destination, the path generated is a zero-length segment (`List<WaypointNode> {start, start}`). Handling this prevents the `LineRenderer.SetPositions` from crashing due to requiring `>= 2` nodes, allowing the system to instantly trigger `OnArrived` on the immediate frame tick.
-3.  **Obstacle during arrival**: `HandleArrived` sets `isNavigating = false` before `HandleObstacleDetected` can fire, preventing a stale reroute.
-4.  **All paths blocked**: A* returns an empty list → `RecalculationFailed` fires → UI shows "No alternative route" → last valid path stays visible so the user can manually navigate.
-5.  **Double events (off-route + obstacle)**: The 1.5s recalculation cooldown absorbs the second event. Only one reroute happens per cooldown window.
+2.  **Start == End Reroutes**: If a user reroutes while physically standing *on* their destination, the path generated is a zero-length segment (`List<WaypointNode> {start, start}`). Handling this prevents the `LineRenderer.SetPositions` from crashing due to requiring `>= 2` nodes, allowing the system to instantly trigger `OnArrived` on the immediate frame tick. 

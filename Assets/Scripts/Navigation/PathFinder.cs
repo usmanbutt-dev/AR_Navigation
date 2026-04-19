@@ -24,16 +24,10 @@ namespace Nibrask.Navigation
         /// <summary>
         /// Finds the shortest path between two waypoint nodes using A* algorithm.
         /// </summary>
+        /// <param name="start">Starting waypoint node</param>
+        /// <param name="end">Destination waypoint node</param>
+        /// <returns>Ordered list of waypoint nodes from start to end, or empty list if no path found.</returns>
         public static List<WaypointNode> FindPath(WaypointNode start, WaypointNode end)
-        {
-            return FindPath(start, end, null);
-        }
-
-        /// <summary>
-        /// Finds the shortest path, treating edges in blockedEdges as impassable.
-        /// blockedEdges contains (nodeIdA, nodeIdB) tuples — checked in both directions.
-        /// </summary>
-        public static List<WaypointNode> FindPath(WaypointNode start, WaypointNode end, HashSet<(int, int)> blockedEdges)
         {
             if (start == null || end == null)
             {
@@ -86,15 +80,6 @@ namespace Nibrask.Navigation
                 {
                     if (neighbor == null || closedSet.Contains(neighbor.nodeId))
                         continue;
-
-                    // Skip edges marked as blocked by ObstacleDetector
-                    if (blockedEdges != null)
-                    {
-                        int curId = current.Waypoint.nodeId;
-                        int nbId = neighbor.nodeId;
-                        if (blockedEdges.Contains((curId, nbId)) || blockedEdges.Contains((nbId, curId)))
-                            continue;
-                    }
 
                     float tentativeGCost = current.GCost + current.Waypoint.DistanceTo(neighbor);
 

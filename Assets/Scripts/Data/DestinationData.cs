@@ -79,5 +79,39 @@ namespace Nibrask.Data
                 _ => "Location"
             };
         }
+
+        /// <summary>
+        /// Calculates the time remaining until boarding based on the boardingTime field
+        /// and the device's current time. Returns a human-readable string like "1h 23m",
+        /// "12 min", or "Boarding now". Returns null if not a gate or no boarding time set.
+        /// </summary>
+        public string GetTimeUntilBoarding()
+        {
+            if (destinationType != DestinationType.Gate || string.IsNullOrEmpty(boardingTime))
+                return null;
+
+            // Parse "HH:mm" format
+            string[] parts = boardingTime.Split(':');
+            if (parts.Length != 2) return null;
+
+            if (!int.TryParse(parts[0], out int hours) || !int.TryParse(parts[1], out int minutes))
+                return null;
+
+            var now = System.DateTime.Now;
+            var boardingToday = new System.DateTime(now.Year, now.Month, now.Day, hours, minutes, 0);
+
+            // If boarding time has already passed today, assume it's tomorrow
+            if (boardingToday < now)
+                boardingToday = boardingToday.AddDays(1);
+
+            var remaining = boardingToday - now;
+
+            if (remaining.TotalMinutes <= 0)
+                return "Boarding now";
+            else if (remaining.TotalMinutes < 60)
+                return $"{(int)remaining.TotalMinutes} min";
+            else
+                return $"{(int)remaining.TotalHours}h {remaining.Minutes:D2}m";
+        }
     }
 }

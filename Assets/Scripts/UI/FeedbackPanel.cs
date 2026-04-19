@@ -90,7 +90,6 @@ namespace Nibrask.UI
             AppEvents.OnRouteRecalculated += HandleRouteRecalculated;
             AppEvents.OnRecalculationFailed += HandleRecalculationFailed; // Fix #11
             AppEvents.OnArrived += HandleArrived;
-            AppEvents.OnObstacleDetected += HandleObstacleDetected;
 
             if (AppStateManager.Instance != null)
                 AppStateManager.Instance.OnStateChanged += HandleStateChanged;
@@ -105,7 +104,6 @@ namespace Nibrask.UI
             AppEvents.OnRouteRecalculated -= HandleRouteRecalculated;
             AppEvents.OnRecalculationFailed -= HandleRecalculationFailed; // Fix #11
             AppEvents.OnArrived -= HandleArrived;
-            AppEvents.OnObstacleDetected -= HandleObstacleDetected;
 
             if (AppStateManager.Instance != null)
                 AppStateManager.Instance.OnStateChanged -= HandleStateChanged;
@@ -295,11 +293,6 @@ namespace Nibrask.UI
 
             if (offRouteWarning != null)
                 offRouteWarning.SetActive(false);
-        }
-
-        private void HandleObstacleDetected(int nodeA, int nodeB)
-        {
-            ShowToast("Obstacle detected ahead — finding alternate route", warningColor, 3f);
         }
 
          private void HandleStateChanged(AppState oldState, AppState newState)
