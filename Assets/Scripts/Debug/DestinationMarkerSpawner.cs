@@ -99,8 +99,11 @@ namespace Nibrask.DebugUtils
                 marker = Instantiate(prefab, worldPos, Quaternion.identity, transform);
                 marker.name = $"Marker_{dest.destinationName}";
 
-                // Add a colored ring/base under the prefab to differentiate
-                // gates that share the same prefab model
+                // Tint the prefab's child meshes so each destination looks unique
+                // even though they all share the same Gate prefab structure
+                TintPrefabChildren(marker, dest);
+
+                // Add a colored ring/base under the prefab for extra visual distinction
                 SpawnColoredBase(dest, worldPos, marker.transform);
             }
             else
@@ -116,6 +119,49 @@ namespace Nibrask.DebugUtils
             if (showLabels)
             {
                 SpawnLabel(dest.destinationName, worldPos + Vector3.up * labelHeightOffset, marker.transform);
+            }
+        }
+
+        /// <summary>
+        /// Tints the child meshes of a prefab marker so each destination looks visually unique
+        /// even when sharing the same Gate prefab. The Gate prefab has:
+        ///   - "Left" pillar, "Right" pillar  → get the destination's accent color
+        ///   - "Top" crossbar                 → gets a lighter/brighter variant
+        /// Uses MaterialPropertyBlock so no extra Material instances are allocated.
+        /// </summary>
+        private void TintPrefabChildren(GameObject marker, DestinationData dest)
+        {
+            Color accentColor = GetDestinationColor(dest);
+
+            // Derive a lighter crossbar color by shifting toward white
+            Color.RGBToHSV(accentColor, out float h, out float s, out float v);
+            Color crossbarColor = Color.HSVToRGB(h, s * 0.4f, Mathf.Min(v + 0.3f, 1f));
+
+            var propBlock = new MaterialPropertyBlock();
+
+            foreach (Transform child in marker.transform)
+            {
+                var rend = child.GetComponent<Renderer>();
+                if (rend == null) continue;
+
+                string childName = child.name.ToLower();
+
+                if (childName == "left" || childName == "right")
+                {
+                    // Pillars: full accent color with emission glow
+                    rend.GetPropertyBlock(propBlock);
+                    propBlock.SetColor("_BaseColor", accentColor);
+                    propBlock.SetColor("_EmissionColor", accentColor * 0.6f);
+                    rend.SetPropertyBlock(propBlock);
+                }
+                else if (childName == "top")
+                {
+                    // Crossbar: lighter variant for contrast
+                    rend.GetPropertyBlock(propBlock);
+                    propBlock.SetColor("_BaseColor", crossbarColor);
+                    propBlock.SetColor("_EmissionColor", crossbarColor * 0.4f);
+                    rend.SetPropertyBlock(propBlock);
+                }
             }
         }
 
