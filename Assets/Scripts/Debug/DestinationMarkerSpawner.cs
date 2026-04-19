@@ -41,8 +41,10 @@ namespace Nibrask.DebugUtils
         private bool showLabels = true;
 
         [SerializeField]
-        [Tooltip("Height above the marker to place the label")]
-        private float labelHeightOffset = 0.6f;
+        [Tooltip("Height above the marker to place the label. " +
+                 "Gate prefab peaks at ~0.72m so set this above that. " +
+                 "Tweak freely in the Inspector.")]
+        private float labelHeightOffset = 1.0f;
 
         [Header("General")]
         [SerializeField]
